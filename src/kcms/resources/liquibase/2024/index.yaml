@@ -1,0 +1,53 @@
+databaseChangeLog:
+  - changeSet:
+      id: first
+      author: andrey
+      changes:
+        - sql:
+            sql: >
+              SELECT NOW();
+
+  - changeSet:
+      id: pages.sql
+      author: andrey
+      changes:
+        - sqlFile:
+            splitStatements: false
+            relativeToChangelogFile: true
+            path: pages.sql
+
+  - changeSet:
+      id: page_slug_index
+      author: andrey
+      changes:
+        - sql:
+            sql: >
+              ALTER TABLE page ADD CONSTRAINT "page_slug" UNIQUE (slug);
+
+  - changeSet:
+      id: page_parent_id
+      author: andrey
+      changes:
+        - sql:
+            sql: >
+              ALTER TABLE page ADD COLUMN IF NOT EXISTS parent_id BIGINT;
+              ALTER TABLE page ADD FOREIGN KEY (parent_id) REFERENCES public.page(id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE SET NULL;
+              CREATE INDEX "page_parent_id" ON page(parent_id);              
+              
+  - changeSet:
+      id: enum.sql
+      author: andrey
+      changes:
+        - sqlFile:
+            splitStatements: false
+            relativeToChangelogFile: true
+            path: enum.sql
+
+  - changeSet:
+      id: file.sql
+      author: andrey
+      changes:
+        - sqlFile:
+            splitStatements: false
+            relativeToChangelogFile: true
+            path: file.sql

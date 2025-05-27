@@ -1,0 +1,8 @@
+DROP TABLE IF EXISTS enum CASCADE;
+CREATE TABLE enum (
+	id BIGSERIAL PRIMARY KEY,
+	category VARCHAR NOT NULL,
+	value VARCHAR NOT NULL
+);
+
+CREATE INDEX "enum_category" ON enum(category);
