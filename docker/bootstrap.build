@@ -1,0 +1,4 @@
+cd /opt/app
+
+/apache-maven-3.9.9/bin/mvn clean compile
+/apache-maven-3.9.9/bin/mvn -q exec:exec -Dexec.classpathScope="compile" -Dexec.executable="echo" -Dexec.args="%classpath" > target/classpath.txt

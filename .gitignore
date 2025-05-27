@@ -4,3 +4,4 @@ target
 local
 src/project
 webapp.iml
+postgresql-data

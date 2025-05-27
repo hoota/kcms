@@ -1,0 +1,8 @@
+FROM bellsoft/liberica-openjdk-alpine:17
+
+RUN wget https://dlcdn.apache.org/maven/maven-3/3.9.9/binaries/apache-maven-3.9.9-bin.zip
+RUN unzip apache-maven-3.9.9-bin.zip
+
+COPY docker/bootstrap.build /bootstrap.sh
+
+ENTRYPOINT ["/bin/sh", "/bootstrap.sh"]

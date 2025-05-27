@@ -1,0 +1,13 @@
+FROM bellsoft/liberica-openjdk-alpine:17
+
+RUN apk add --no-cache postgresql # php8 php8-session php8-fpm php8-pgsql
+
+RUN mkdir /adminer && cd /adminer && wget https://github.com/vrana/adminer/releases/download/v4.8.1/adminer-4.8.1-en.php -O index.php && ln -s /adminer/ .
+
+WORKDIR /opt/app
+
+COPY docker/bootstrap.run /bootstrap.sh
+COPY target/classpath.txt /opt/app/target/classpath.txt
+COPY target/classes /opt/app/target/classes
+
+ENTRYPOINT ["/bin/sh", "/bootstrap.sh"]
