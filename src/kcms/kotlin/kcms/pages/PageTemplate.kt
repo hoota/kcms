@@ -1,5 +1,6 @@
 package kcms.pages
 
+import kcms.files.PageFile
 import kcms.widgets.Widget
 import kcms.widgets.WidgetRenderContext
 import org.springframework.web.servlet.View
@@ -8,6 +9,7 @@ data class PageTemplateRenderContext(
     val page: Page,
     val rootProperties: Map<String, Map<String, PageProperty>>?,
     val pageProperties: Map<String, Map<String, PageProperty>>?,
+    val pageFiles: List<PageFile>,
 ) : WidgetRenderContext {
 
     override fun getProperty(widgetId: String, propertyKey: String): PageProperty? =

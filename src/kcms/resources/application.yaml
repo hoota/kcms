@@ -1,5 +1,5 @@
 server:
-  port: ${JAV_HTTP_PORT:8080}
+  port: ${KCMS_HTTP_PORT:8080}
   address: 0.0.0.0
   servlet.context-path: /
   compression:
@@ -11,14 +11,14 @@ spring:
       matching-strategy: ANT_PATH_MATCHER
   datasource:
     hikari:
-      jdbc-url: ${JAV_DB_URL}
-      username: ${JAV_DB_USER}
-      password: ${JAV_DB_PASSWORD}
+      jdbc-url: ${KCMS_DB_URL}
+      username: ${KCMS_DB_USER}
+      password: ${KCMS_DB_PASSWORD}
       driver-class-name: org.postgresql.Driver
-      maximum-pool-size: ${JAV_DB_POOL_MAX:5}
-      minimum-idle: ${JAV_DB_POOL_MIN:1}
+      maximum-pool-size: ${KCMS_DB_POOL_MAX:5}
+      minimum-idle: ${KCMS_DB_POOL_MIN:1}
       idle-timeout: 60000
-      pool-name: ${JAV_DB_POOL:ll-db-pool}
+      pool-name: ${KCMS_DB_POOL:ll-db-pool}
   liquibase:
     change-log: classpath:/liquibase/changelog-master.yaml
     drop-first: false

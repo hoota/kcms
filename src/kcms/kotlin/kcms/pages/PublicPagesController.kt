@@ -1,5 +1,6 @@
 package kcms.pages
 
+import kcms.files.PageFilesService
 import org.springframework.core.io.ClassPathResource
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Controller
@@ -13,6 +14,7 @@ import javax.servlet.http.HttpServletResponse
 @Controller
 class PublicPagesController(
     val pageTemplatesService: PageTemplatesService,
+    val pageFilesService: PageFilesService,
 ) {
     @GetMapping("/**")
     fun page(
@@ -43,7 +45,8 @@ class PublicPagesController(
                     PageTemplateRenderContext(
                         page = page,
                         rootProperties =  pageTemplatesService.getPageProperties(0),
-                        pageProperties = pageTemplatesService.getPageProperties(page.id)
+                        pageProperties = pageTemplatesService.getPageProperties(page.id),
+                        pageFiles = pageFilesService.getPageFiles(page.id)
                     )
                 )
             }

@@ -4,6 +4,7 @@ import kcms.common.CommonService
 import kcms.common.orNull
 import kcms.files.PageFileRepository
 import kcms.files.PageFilesService
+import kcms.ui.cms.PagedData
 import kiss.gossr.spring.GetRoute
 import kiss.gossr.spring.MultipartPostRoute
 import kiss.gossr.spring.PostRoute
@@ -42,33 +43,50 @@ class CMSPagesController(
 
     @RouteHandler
     fun templateSave(route: CmsTemplateSaveRoute): ModelAndView {
-        if(route.doSave != null) transaction { em ->
-            route.properties.forEach { (widgetId, props) ->
-                props.forEach { (propertyId, value) ->
-                    em.merge(PageProperty(
-                        id = PagePropertyId(
-                            pageId = 0L,
-                            widgetId = widgetId,
-                            propertyId = propertyId,
-                        ),
-                        text = value,
-                        number = value.toLongOrNull(),
-                        date = try { LocalDate.parse(value) }catch(e: Exception) { null }
-                    ))
+        if(route.doSave != null) {
+            transaction { em ->
+                route.properties.forEach { (widgetId, props) ->
+                    props.forEach { (propertyId, value) ->
+                        em.merge(PageProperty(
+                            id = PagePropertyId(
+                                pageId = 0L,
+                                widgetId = widgetId,
+                                propertyId = propertyId,
+                            ),
+                            text = value,
+                            number = value.toLongOrNull(),
+                            date = try { LocalDate.parse(value) }catch(e: Exception) { null }
+                        ))
+                    }
                 }
             }
+            pageFilesService.resetCaches()
         }
 
         return ModelAndView(redirect(CmsTemplatesListRoute()))
     }
 
-    class CmsPagesListRoute : GetRoute
+    data class CmsPagesListRoute(
+        val query: String? = null,
+        val searchContent: Boolean? = null,
+        val page: Int? = null,
+    ) : GetRoute
 
     @RouteHandler
     fun pagesList(
         route: CmsPagesListRoute
     ): View {
-        return CMSPagesListPage(pagesRepository.findAll().toList())
+        val pages = pageTemplatesService.searchPages(
+            query = route.query,
+            templateId = null,
+            checkProperties = route.searchContent == true
+        )
+
+        return CMSPagesListPage(route, PagedData.of(
+            list = pages.toList(),
+            page = route.page ?: 1,
+            pageSize = 20
+        ))
     }
 
     data class CmsPageRoute(val id: Long) : GetRoute
@@ -135,6 +153,7 @@ class CMSPagesController(
                     }
                 }
             }
+            pageFilesService.resetCaches()
         }
 
         return ModelAndView(redirect(CmsPagesListRoute()))
@@ -164,6 +183,7 @@ class CMSPagesController(
         route.files?.forEach { file ->
             pageFilesService.save(route.pageId, file)
         }
+
 
         return redirect(CmsPageRoute(route.pageId))
     }

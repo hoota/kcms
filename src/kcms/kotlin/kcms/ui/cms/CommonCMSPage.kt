@@ -53,7 +53,7 @@ abstract class CommonCMSPage(
                     ::placeholder {
                         transition: opacity 0.2s;
                         font-style: italic;
-                        color: #28a745!important;
+                        __color: #28a745!important;
                     }
                     :hover::placeholder, :focus::placeholder { transition: opacity 0.2s; opacity: 0; }
                     @media (max-width: 1800px) {

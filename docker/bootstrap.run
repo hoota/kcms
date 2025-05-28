@@ -7,13 +7,13 @@ su - postgres -c "pg_ctl start -D /var/lib/postgresql/data"
 
 echo "CREATE DATABASE kcms" | psql -U postgres
 
-#exit
 
-export JAV_DB_URL=jdbc:postgresql://localhost:5432/kcms
-export JAV_DB_USER=postgres
-export JAV_DB_PASSWORD=
+export KCMS_DB_URL=jdbc:postgresql://localhost:5432/kcms
+export KCMS_DB_USER=postgres
+export KCMS_DB_PASSWORD=
+export KCMS_DB_POOL_MAX=40
 
 CLASSPATH=$(cat target/classpath.txt)
 WITH_SCHEDULER="-Dapp.scheduling.enable=true"
 
-java -Xmx1G $WITH_SCHEDULER -Dfile.encoding=UTF-8 -classpath $CLASSPATH kcms.WebApplicationKt
+exec java -Xmx1G $WITH_SCHEDULER -Dfile.encoding=UTF-8 -classpath $CLASSPATH kcms.WebApplicationKt
