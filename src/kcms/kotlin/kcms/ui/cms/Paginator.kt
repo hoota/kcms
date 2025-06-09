@@ -1,6 +1,6 @@
 package kcms.ui.cms
 
-import kcms.ui.KCMSGossRenderer
+import kcms.ui.KcmsGossRenderer
 import kiss.gossr.spring.GetRoute
 import kotlin.math.absoluteValue
 
@@ -20,7 +20,7 @@ data class PagedData<T>(
     }
 }
 
-class Paginator : KCMSGossRenderer() {
+class Paginator : KcmsGossRenderer() {
     fun <T> draw(data: PagedData<T>, routeBuilder: (Int) -> GetRoute) {
         if(data.lastPage <= 1) return
         NAV {

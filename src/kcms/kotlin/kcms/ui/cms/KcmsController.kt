@@ -6,9 +6,9 @@ import org.springframework.stereotype.Controller
 
 @Controller
 @RouteHandler
-class CMSController {
-    class CmsRoute : GetRoute
+class KcmsController {
+    class KcmsRoute : GetRoute
 
     @RouteHandler
-    fun root(route: CmsRoute) = CMSDashboardPage()
+    fun root(route: KcmsRoute) = KcmsDashboardPage()
 }

@@ -2,11 +2,16 @@ cd /opt/app
 
 mkdir -p /run/postgresql/
 chown postgres /run/postgresql
-su - postgres -c "initdb -D /var/lib/postgresql/data"
-su - postgres -c "pg_ctl start -D /var/lib/postgresql/data"
 
-echo "CREATE DATABASE kcms" | psql -U postgres
+if [ -f "/var/lib/postgresql/data/postgresql.conf" ]; then
+	su - postgres -c "pg_ctl start -D /var/lib/postgresql/data"
+else
+	su - postgres -c "initdb -D /var/lib/postgresql/data"
+	echo "listen_addresses = '*'" >> /var/lib/postgresql/data/postgresql.conf
+	su - postgres -c "pg_ctl start -D /var/lib/postgresql/data"
 
+	echo "CREATE DATABASE kcms" | psql -U postgres
+fi
 
 export KCMS_DB_URL=jdbc:postgresql://localhost:5432/kcms
 export KCMS_DB_USER=postgres

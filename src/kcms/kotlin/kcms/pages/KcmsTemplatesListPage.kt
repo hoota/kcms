@@ -1,13 +1,13 @@
 package kcms.pages
 
-import kcms.ui.cms.CommonCMSPage
+import kcms.ui.cms.CommonKcmsPage
 import kcms.ui.cms.MenuModule
-import kcms.widgets.WidgetContainer
 import kcms.widgets.Widget
+import kcms.widgets.WidgetContainer
 
-class CmsTemplatesListPage(
+class KcmsTemplatesListPage(
     val templates: List<PageTemplate>
-) : CommonCMSPage(
+) : CommonKcmsPage(
     title = "Page Templates",
     module = MenuModule.TEMPLATES
 ) {
@@ -28,7 +28,7 @@ class CmsTemplatesListPage(
                     TR {
                         TD {
                             A {
-                                href(CmsTemplateRoute(t.id))
+                                href(KcmsTemplateRoute(t.id))
                                 +t.id
                             }
                         }
@@ -57,17 +57,17 @@ class CmsTemplatesListPage(
 
     private fun sharedPropertiesCount(w: Widget): Int {
         return if(w is WidgetContainer) {
-            w.properties.count { it.shared } + (w.children?.sumOf { sharedPropertiesCount(it) } ?: 0)
+            w.properties.count { it.globalScope } + (w.children?.sumOf { sharedPropertiesCount(it) } ?: 0)
         } else {
-            w.properties.count { it.shared }
+            w.properties.count { it.globalScope }
         }
     }
 
     private fun pagePropertiesCount(w: Widget): Int {
         return if(w is WidgetContainer) {
-            w.properties.count { !it.shared } + (w.children?.sumOf { pagePropertiesCount(it) } ?: 0)
+            w.properties.count { !it.globalScope } + (w.children?.sumOf { pagePropertiesCount(it) } ?: 0)
         } else {
-            w.properties.count { !it.shared }
+            w.properties.count { !it.globalScope }
         }
     }
 

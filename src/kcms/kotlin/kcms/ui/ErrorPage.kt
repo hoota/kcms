@@ -5,7 +5,7 @@ import java.time.LocalDateTime
 class ErrorPage(
     val description: String? = null,
     val e: Exception? = null
-) : KCMSGossRendererView() {
+) : KcmsGossRendererView() {
 
     override fun draw() {
         noEscape("<!DOCTYPE html>")

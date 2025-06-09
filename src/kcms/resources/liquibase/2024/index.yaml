@@ -51,3 +51,47 @@ databaseChangeLog:
             splitStatements: false
             relativeToChangelogFile: true
             path: file.sql
+
+  - changeSet:
+      id: page_404
+      author: andrey
+      changes:
+        - sql:
+            sql: >
+              INSERT INTO page VALUES(-404, '/404', 'Page not found', '');
+
+  - changeSet:
+      id: page_property_number_numeric
+      author: andrey
+      changes:
+        - sql:
+            sql: >
+              ALTER TABLE public.page_property ALTER number TYPE numeric;
+
+  - changeSet:
+      id: enum__order
+      author: andrey
+      changes:
+        - sql:
+            sql: >
+              ALTER TABLE public.enum ADD COLUMN IF NOT EXISTS ord INT NOT NULL DEFAULT 0;
+
+  - changeSet:
+      id: page__published
+      author: andrey
+      changes:
+        - sql:
+            sql: >
+              ALTER TABLE public.page ADD COLUMN IF NOT EXISTS published BOOL NOT NULL DEFAULT false;
+              UPDATE public.page SET published=true;
+
+  - changeSet:
+      id: file__size_symlink
+      author: andrey
+      changes:
+        - sql:
+            sql: >
+              ALTER TABLE public.file ADD COLUMN IF NOT EXISTS size BIGINT NOT NULL DEFAULT 0, ADD COLUMN IF NOT EXISTS symlink BIGINT;
+              ALTER TABLE public.file ADD FOREIGN KEY (symlink) REFERENCES public.file(id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE;
+              CREATE INDEX "file_symlink" ON file(symlink);
+

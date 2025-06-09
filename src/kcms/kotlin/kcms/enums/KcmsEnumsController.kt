@@ -7,26 +7,26 @@ import org.springframework.web.servlet.View
 
 @Component
 @RouteHandler
-class CmsEnumsController(
+class KcmsEnumsController(
     val enumValueService: EnumValueService,
     val enumValueRepository: EnumValueRepository
 ) : CommonService() {
 
     @RouteHandler
-    fun categories(route: CmsEnumsCategoriesRoute): View {
-        return CmsEnumsCategoriesPage()
+    fun categories(route: KcmsEnumsCategoriesRoute): View {
+        return KcmsEnumsCategoriesPage()
     }
 
     @RouteHandler
-    fun category(route: CmsEnumCategoryRoute): View {
-        return CmsEnumCategoryPage(
+    fun category(route: KcmsEnumCategoryRoute): View {
+        return KcmsEnumCategoryPage(
             category = enumValueService.categories.first { it.id == route.c },
             values = enumValueRepository.findByCategory(route.c)
         )
     }
 
     @RouteHandler
-    fun categorySave(route: CmsEnumCategorySaveRoute): String {
+    fun categorySave(route: KcmsEnumCategorySaveRoute): String {
         transaction {
             route.values.forEach { (id, value) ->
                 if(value.isNullOrBlank()) {
@@ -36,7 +36,8 @@ class CmsEnumsController(
                         EnumValue(
                             id = id,
                             category = route.categoryId,
-                            value = value
+                            value = value,
+                            order = route.orders[id] ?: 0
                         )
                     )
                 }
@@ -45,16 +46,18 @@ class CmsEnumsController(
 
         enumValueService.resetCaches()
 
-        return redirect(CmsEnumsCategoriesRoute())
+        return redirect(KcmsEnumsCategoriesRoute())
     }
 
     @RouteHandler
-    fun newEnumValue(route: CmsEnumCategoryNewValueRoute): View {
-        return CmsEnumCategoryPage.NewValueRowView(
+    fun newEnumValue(route: KcmsEnumCategoryNewValueRoute): View {
+        val id = enumValueRepository.nextId()
+        return KcmsEnumCategoryPage.NewValueRowView(
             EnumValue(
-                id = enumValueRepository.nextId(),
+                id = id,
                 category = route.categoryId,
-                value = ""
+                value = "",
+                order = -id.toInt()
             )
         )
     }

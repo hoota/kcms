@@ -1,20 +1,26 @@
 package kcms.files
 
 import com.google.common.cache.CacheBuilder
+import kcms.common.Caches
 import kcms.common.Caching
 import kcms.common.CommonService
 import org.springframework.stereotype.Service
+import org.springframework.util.StreamUtils
 import org.springframework.web.multipart.MultipartFile
 import java.awt.Image
 import java.awt.image.BufferedImage
 import java.io.File
+import java.net.URL
+import java.nio.file.Files
+import java.util.*
 import java.util.concurrent.TimeUnit
+import javax.annotation.PostConstruct
 import javax.imageio.ImageIO
 
 @Service
 class PageFilesService(
     val pageFileRepository: PageFileRepository,
-    val scales: List<CmsImageScale>,
+    val scales: List<KcmsImageScale>,
 ) : CommonService(), Caching {
 
     private val filesByPageCache = CacheBuilder.newBuilder()
@@ -30,28 +36,35 @@ class PageFilesService(
         pageFileRepository.findByPageId(pageId).map { it.copy() }
     }
 
-    fun save(pageId: Long, file: MultipartFile) {
+    fun save(pageId: Long?, file: MultipartFile) {
         val origName = file.originalFilename ?: ""
 
         val type = PageFileType.values().firstOrNull { t ->
             t.ext.any { e -> origName.endsWith(".$e", ignoreCase = true) }
         } ?: return
 
-        val f = pageFileRepository.save(PageFile(
+        val tempFile = File("files/${UUID.randomUUID()}").absoluteFile
+        tempFile.parentFile.mkdirs()
+        file.transferTo(tempFile)
+
+        val f = PageFile(
             id = pageFileRepository.nextId(),
             pageId = pageId,
             type = type,
-            origName = origName
-        ))
+            origName = origName,
+            size = tempFile.length()
+        )
 
-        val dest = File(".${f.url()}").absoluteFile
-        dest.parentFile.mkdirs()
-        file.transferTo(dest)
+        tempFile.renameTo(File(".${f.url()}").absoluteFile.also {
+            it.parentFile.mkdirs()
+        })
 
-        filesByPageCache.invalidate(pageId)
+        pageFileRepository.save(f)
+
+        Caches.instance.reset()
     }
 
-    fun removeFile(pageId: Long, fileId: Long) {
+    fun removeFile(fileId: Long) {
         pageFileRepository.findById(fileId).ifPresent { f ->
             transaction {
                 pageFileRepository.delete(f)
@@ -63,7 +76,7 @@ class PageFilesService(
             }
         }
 
-        filesByPageCache.invalidate(pageId)
+        Caches.instance.reset()
     }
 
     fun scale(file: File): Boolean {
@@ -77,7 +90,7 @@ class PageFilesService(
             val fileId = m.groupValues[1].toLong()
             val height = m.groupValues[2].toInt()
 
-            if(scales.none { it.type == CmsImageScaleType.HEIGHT && it.size == height }) return false
+            if(scales.none { it.type == KcmsImageScaleType.HEIGHT && it.size == height }) return false
 
             val inputFile = File(file.parentFile.absolutePath + "/$fileId.${type.ext.first()}")
             if(!inputFile.exists()) return false
@@ -89,7 +102,7 @@ class PageFilesService(
             val fileId = m.groupValues[1].toLong()
             val width = m.groupValues[2].toInt()
 
-            if(scales.none { it.type == CmsImageScaleType.WIDTH && it.size == width }) return false
+            if(scales.none { it.type == KcmsImageScaleType.WIDTH && it.size == width }) return false
 
             val inputFile = File(file.parentFile.absolutePath + "/$fileId.${type.ext.first()}")
             if(!inputFile.exists()) return false
@@ -108,16 +121,21 @@ class PageFilesService(
         val originalHeight = originalImage.height
         val targetHeight = (targetWidth * originalHeight) / originalWidth
 
-        // Создание нового изображения с нужными размерами
-        val tmp = originalImage.getScaledInstance(targetWidth, targetHeight, Image.SCALE_SMOOTH)
-        val resizedImage = BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_RGB)
+        if(targetWidth >= originalWidth || targetHeight >= originalHeight) {
+            // create a symlink
+            Files.createSymbolicLink(outputFile.canonicalFile.toPath(), inputFile.canonicalFile.toPath())
+        } else {
+            // Создание нового изображения с нужными размерами
+            val tmp = originalImage.getScaledInstance(targetWidth, targetHeight, Image.SCALE_SMOOTH)
+            val resizedImage = BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_RGB)
 
-        // Отрисовка изображения
-        val g2d = resizedImage.createGraphics()
-        g2d.drawImage(tmp, 0, 0, null)
-        g2d.dispose()
+            // Отрисовка изображения
+            val g2d = resizedImage.createGraphics()
+            g2d.drawImage(tmp, 0, 0, null)
+            g2d.dispose()
 
-        ImageIO.write(resizedImage, format, outputFile)
+            ImageIO.write(resizedImage, format, outputFile)
+        }
         true
     }catch(e: Exception) {
         log.error(e.message, e)
@@ -132,29 +150,100 @@ class PageFilesService(
         val originalHeight = originalImage.height
         val targetWidth = (targetHeight * originalWidth) / originalHeight
 
-        // Создание нового изображения с нужными размерами
-        val tmp = originalImage.getScaledInstance(targetWidth, targetHeight, Image.SCALE_SMOOTH)
-        val resizedImage = BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_RGB)
+        if(targetWidth >= originalWidth || targetHeight >= originalHeight) {
+            // create a symlink
+            Files.createSymbolicLink(outputFile.canonicalFile.toPath(), inputFile.canonicalFile.toPath())
+        } else {
+            // Создание нового изображения с нужными размерами
+            val tmp = originalImage.getScaledInstance(targetWidth, targetHeight, Image.SCALE_SMOOTH)
+            val resizedImage = BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_RGB)
 
-        // Отрисовка изображения
-        val g2d = resizedImage.createGraphics()
-        g2d.drawImage(tmp, 0, 0, null)
-        g2d.dispose()
+            // Отрисовка изображения
+            val g2d = resizedImage.createGraphics()
+            g2d.drawImage(tmp, 0, 0, null)
+            g2d.dispose()
 
-        ImageIO.write(resizedImage, format, outputFile)
+            ImageIO.write(resizedImage, format, outputFile)
+        }
         true
     }catch(e: Exception) {
         log.error(e.message, e)
         false
     }
 
+    fun save(pageId: Long?, url: String) {
+        val url = URL(url)
+
+        val origName = url.file?.replace(Regex(".*/([^/]+)$"), "$1") ?: ""
+
+        val type = PageFileType.values().firstOrNull { t ->
+            t.ext.any { e -> origName.endsWith(".$e", ignoreCase = true) }
+        } ?: return
+
+
+        val tempFile = File("files/${UUID.randomUUID()}").absoluteFile
+        tempFile.parentFile.mkdirs()
+        tempFile.outputStream().use { out ->
+            url.openStream().use { input ->
+                StreamUtils.copy(input, out)
+            }
+        }
+
+        val f = PageFile(
+            id = pageFileRepository.nextId(),
+            pageId = pageId,
+            type = type,
+            origName = origName,
+            size = tempFile.length()
+        )
+
+        tempFile.renameTo(File(".${f.url()}").absoluteFile.also {
+            it.parentFile.mkdirs()
+        })
+
+        pageFileRepository.save(f)
+
+        Caches.instance.reset()
+
+    }
+
+    fun getPagesFiles(pageIds: List<Long>): Map<Long, List<PageFile>> {
+        val result = HashMap<Long, List<PageFile>>()
+
+        val missedIds = pageIds.filter { pageId ->
+            val files = filesByPageCache.getIfPresent(pageId)
+            if(files != null) result[pageId] = files
+            files == null
+        }
+
+        if(missedIds.isNotEmpty()) {
+            val pageFiles = pageFileRepository.findByPageIdIn(missedIds).map { it.copy() }.groupBy { it.pageId }
+
+            missedIds.forEach { pageId ->
+                val files = pageFiles[pageId] ?: emptyList()
+                result[pageId] = files
+                filesByPageCache.put(pageId, files)
+            }
+        }
+
+        return result
+    }
+
+    @PostConstruct
+    fun postConstruct() {
+        instance = this
+    }
+
+    companion object {
+        lateinit var instance: PageFilesService
+    }
 }
 
-enum class CmsImageScaleType {
+enum class KcmsImageScaleType {
     WIDTH, HEIGHT
 }
 
-interface CmsImageScale {
+interface KcmsImageScale {
     val size: Int
-    val type: CmsImageScaleType
+    val type: KcmsImageScaleType
 }

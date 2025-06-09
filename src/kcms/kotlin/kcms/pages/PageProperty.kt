@@ -1,8 +1,10 @@
 package kcms.pages
 
 import kcms.common.CrudRepository
+import kcms.ui.KcmsGossRenderer
 import org.springframework.stereotype.Repository
 import java.io.Serializable
+import java.math.BigDecimal
 import java.time.LocalDate
 import javax.persistence.Embeddable
 import javax.persistence.EmbeddedId
@@ -14,10 +16,34 @@ import javax.persistence.Table
 data class PageProperty(
     @EmbeddedId
     val id: PagePropertyId,
-    val text: String? = null,
-    val date: LocalDate? = null,
-    val number: Long? = null,
+    var text: String? = null,
+    var date: LocalDate? = null,
+    var number: BigDecimal? = null,
 ) : Serializable
+
+var PageProperty.asList: List<String>?
+    get() = try {
+        KcmsGossRenderer.objectMapper.readValue(text, PagePropertyStringListValue::class.java)
+    }catch(e: Exception) {
+        null
+    }
+    set(v) {
+        text = KcmsGossRenderer.objectMapper.writeValueAsString(v)
+    }
+
+var PageProperty.asMap: Map<Long, String>?
+    get() = try {
+        KcmsGossRenderer.objectMapper.readValue(text, PagePropertyMapValue::class.java)
+    }catch(e: Exception) {
+        null
+    }
+    set(v) {
+        text = KcmsGossRenderer.objectMapper.writeValueAsString(v)
+    }
+
+class PagePropertyStringListValue : ArrayList<String>()
+
+class PagePropertyMapValue : LinkedHashMap<Long, String>()
 
 @Embeddable
 data class PagePropertyId(

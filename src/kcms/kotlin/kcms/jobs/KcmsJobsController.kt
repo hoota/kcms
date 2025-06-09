@@ -10,14 +10,14 @@ import java.util.concurrent.ForkJoinPool
 
 @Component
 @RouteHandler
-class JobsController(
+class KcmsJobsController(
     val jobsRunnerService: JobsRunnerService
 ) : CommonService() {
     class AdminJobsListRoute : GetRoute
 
     @RouteHandler
     fun jobsList(route: AdminJobsListRoute): View {
-        return CMSJobsListPage(
+        return KcmsJobsListPage(
             jobsRunnerService.jobsStatus()
         )
     }

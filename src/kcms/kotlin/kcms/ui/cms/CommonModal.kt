@@ -1,6 +1,6 @@
 package kcms.ui.cms
 
-import kcms.ui.KCMSGossRendererView
+import kcms.ui.KcmsGossRendererView
 
 enum class ModalSize(val cssClass: String) {
     small("modal-sm"),
@@ -12,7 +12,7 @@ enum class ModalSize(val cssClass: String) {
 abstract class CommonModal(
     val title: String,
     private val size: ModalSize = ModalSize.xlarge
-): KCMSGossRendererView() {
+): KcmsGossRendererView() {
 
     open fun buttonTitle(): String? = null
     open fun title() {

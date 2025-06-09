@@ -3,6 +3,7 @@ package kcms.jobs
 import kcms.common.CommonService
 import org.springframework.stereotype.Service
 import java.util.concurrent.ConcurrentHashMap
+import javax.annotation.PostConstruct
 
 @Service
 class JobsRunnerService(
@@ -29,6 +30,15 @@ class JobsRunnerService(
                 }
             }
         }
+    }
+
+    @PostConstruct
+    fun postContruct() {
+        instance = this
+    }
+
+    companion object {
+        lateinit var instance: JobsRunnerService
     }
 }
 

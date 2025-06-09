@@ -1,6 +1,6 @@
 package kcms.ui.cms
 
-class CMSDashboardPage : CommonCMSPage(
+class KcmsDashboardPage : CommonKcmsPage(
     title = "CMS"
 ) {
 

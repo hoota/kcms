@@ -1,16 +1,16 @@
 package kcms.ui.cms
 
-import kcms.ui.KCMSGossRendererView
+import kcms.ui.KcmsGossRendererView
 import kiss.gossr.spring.GetRoute
 import java.util.*
 
-abstract class CommonCMSPage(
+abstract class CommonKcmsPage(
     val title: String? = null,
     val module: MenuModule? = null,
     val showTitleAsHeader: Boolean = true,
     val showMenu: Boolean = true,
     val mainContainerClass: String = "container-fluid"
-) : KCMSGossRendererView() {
+) : KcmsGossRendererView() {
 
     open fun preTitle() {}
     abstract fun pageBody()
@@ -81,7 +81,7 @@ abstract class CommonCMSPage(
             }
             BODY {
                 if(showMenu) {
-                    CmsMenuBlock().draw(module)
+                    KcmsMenuBlock().draw(module)
                 }
 
                 DIV(mainContainerClass) {

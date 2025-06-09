@@ -1,11 +1,11 @@
 package kcms.jobs
 
-import kcms.ui.cms.CommonCMSPage
+import kcms.ui.cms.CommonKcmsPage
 import kcms.ui.cms.MenuModule
 
-class CMSJobsListPage(
+class KcmsJobsListPage(
     val jobsStatus: Map<String, String?>
-) : CommonCMSPage(
+) : CommonKcmsPage(
     title = "Executable Jobs",
     module = MenuModule.JOBS,
 ) {
@@ -25,7 +25,7 @@ class CMSJobsListPage(
                         TD { +j.key }
                         TD { +j.value }
                         TD {
-                            FORM(JobsController.AdminJobRunRoute(j.key)) { route ->
+                            FORM(KcmsJobsController.AdminJobRunRoute(j.key)) { route ->
                                 HIDDEN(route::jobName)
                                 SUBMIT("btn btn-sm btn-primary", "Run")
                             }

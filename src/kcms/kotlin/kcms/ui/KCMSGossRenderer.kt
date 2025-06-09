@@ -16,17 +16,30 @@ import kiss.gossr.spring.GetRoute
 import kiss.gossr.spring.GossSpringRenderer
 import kiss.gossr.spring.GossrSpringView
 import kiss.gossr.spring.RoutesHelper
+import org.springframework.core.io.ClassPathResource
 import org.springframework.security.web.csrf.CsrfToken
 import org.springframework.stereotype.Component
+import org.springframework.util.DigestUtils
 import org.springframework.web.multipart.MultipartFile
 import java.math.BigDecimal
 import java.math.BigInteger
+import java.util.concurrent.ConcurrentHashMap
 
 @Suppress("FunctionNaming")
-open class KCMSGossRenderer : GossSpringRenderer() {
+open class KcmsGossRenderer : GossSpringRenderer() {
 
     override fun csrf(): Pair<String, String>? = (request()?.getAttribute("_csrf") as? CsrfToken)?.let {
         it.parameterName to it.token
+    }
+
+    fun getResourceUrlWithVersion(path: String): String = resourceVersions.computeIfAbsent(path) {
+        val resource = ClassPathResource("static$path")
+        if(resource.exists() && resource.file.isFile) {
+            val ver = resource.inputStream.use { DigestUtils.md5DigestAsHex(it) }
+            "$path?v=$ver"
+        } else {
+            path
+        }
     }
 
     override fun typeMoney(name: String?, value: Number?, required: Boolean) {
@@ -84,6 +97,8 @@ open class KCMSGossRenderer : GossSpringRenderer() {
     companion object {
         val objectMapper = createObjectMapper()
 
+        val resourceVersions = ConcurrentHashMap<String, String>()
+
         private fun createObjectMapper(): ObjectMapper {
             val converter = ObjectMapper()
             converter.registerModule(JavaTimeModule())
@@ -103,7 +118,7 @@ open class KCMSGossRenderer : GossSpringRenderer() {
 }
 
 @Suppress("UnnecessaryAbstractClass")
-abstract class KCMSGossRendererView : KCMSGossRenderer(), GossrSpringView
+abstract class KcmsGossRendererView : KcmsGossRenderer(), GossrSpringView
 
 @Component
 class MultipartFileModule : com.fasterxml.jackson.databind.module.SimpleModule() {

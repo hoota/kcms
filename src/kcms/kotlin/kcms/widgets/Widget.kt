@@ -1,28 +1,38 @@
 package kcms.widgets
 
-import kcms.ui.KCMSGossRenderer
+import kcms.enums.KcmsEnumCategory
 import kcms.pages.PageProperty
+import kcms.pages.PageTemplateRenderContext
+import kcms.ui.KcmsGossRenderer
+import java.math.BigDecimal
 
 enum class WidgetPropertyType {
-    HTML, TEXT, DATE, NUMBER, ENUM
+    STRING, TEXT, DATE, NUMBER, ENUM, ENUMS_SET, WIDGET_COMPONENT, LIST, MAP
 }
 
-data class WidgetPropertyDescriptor(
+open class WidgetPropertyDescriptor(
     val key: String,
     val title: String,
     val type: WidgetPropertyType,
-    val shared: Boolean,
-    val enumCategory: String? = null,
+    val globalScope: Boolean = false,
+    val required: Boolean = false,
+    val enumCategory: KcmsEnumCategory? = null,
+    val numberMin: BigDecimal? = null,
+    val numberStep: BigDecimal? = null,
+    val widgetComponentClass: Class<out WidgetComponent>? = null,
+    val columns: Int = 1,
 )
 
 interface WidgetRenderContext {
     fun getProperty(widgetId: String, propertyKey: String): PageProperty?
+    fun getProperty(widget: Widget, property: WidgetPropertyDescriptor): PageProperty?
 }
 
 interface Widget {
     val id: String
     val title: String
-    val properties: List<WidgetPropertyDescriptor>
+    val properties: List<WidgetPropertyDescriptor> get() = propertiesRows?.flatten() ?: emptyList()
+    val propertiesRows: List<List<WidgetPropertyDescriptor>>? get() = null
 }
 
 interface ValueWidget<T> : Widget {
@@ -32,37 +42,19 @@ interface ValueWidget<T> : Widget {
 class NumberValueWidget(
     override val id: String,
     override val title: String,
-    common: Boolean,
-) : ValueWidget<Long> {
+    globalScope: Boolean,
+) : ValueWidget<BigDecimal> {
     val propertyDescriptor = WidgetPropertyDescriptor(
         key = "value",
         title = "Number",
-        type = WidgetPropertyType.HTML,
-        shared = common
+        type = WidgetPropertyType.NUMBER,
+        globalScope = globalScope
     )
 
     override val properties: List<WidgetPropertyDescriptor> = listOf(propertyDescriptor)
 
-    override fun getValue(context: WidgetRenderContext): Long? =
+    override fun getValue(context: WidgetRenderContext): BigDecimal? =
         context.getProperty(id, propertyDescriptor.key)?.number
-}
-
-class StringValueWidget(
-    override val id: String,
-    override val title: String,
-    common: Boolean,
-) : ValueWidget<String> {
-    val propertyDescriptor = WidgetPropertyDescriptor(
-        key = "value",
-        title = "Text",
-        type = WidgetPropertyType.TEXT,
-        shared = common
-    )
-
-    override val properties: List<WidgetPropertyDescriptor> = listOf(propertyDescriptor)
-
-    override fun getValue(context: WidgetRenderContext): String? =
-        context.getProperty(id, propertyDescriptor.key)?.text
 }
 
 interface WidgetContainer : Widget {
@@ -72,20 +64,19 @@ interface WidgetContainer : Widget {
 open class HtmlContentWidget(
     override val id: String,
     override val title: String,
-    common: Boolean,
-) : WidgetContainer {
-    override val children: List<Widget>? get() = null
+    common: Boolean = false,
+) : Widget {
 
     val propertyDescriptor = WidgetPropertyDescriptor(
         key = "content",
         title = "HTML",
-        type = WidgetPropertyType.HTML,
-        shared = common
+        type = WidgetPropertyType.TEXT,
+        globalScope = common
     )
 
     override val properties: List<WidgetPropertyDescriptor> = listOf(propertyDescriptor)
 
-    fun render(context: WidgetRenderContext, renderer: KCMSGossRenderer) = renderer.apply {
+    fun render(context: WidgetRenderContext, renderer: KcmsGossRenderer) = renderer.apply {
         noEscape(context.getProperty(id, propertyDescriptor.key)?.text)
     }
 }
@@ -93,20 +84,18 @@ open class HtmlContentWidget(
 open class TextContentWidget(
     override val id: String,
     override val title: String,
-    common: Boolean,
-) : WidgetContainer  {
-    override val children: List<Widget>? get() = null
+    type: WidgetPropertyType = WidgetPropertyType.TEXT,
+    common: Boolean = false,
+) : Widget  {
 
     val propertyDescriptor = WidgetPropertyDescriptor(
         key = "content",
         title = "Text",
-        type = WidgetPropertyType.TEXT,
-        shared = common
+        type = type,
+        globalScope = common
     )
 
     override val properties: List<WidgetPropertyDescriptor> = listOf(propertyDescriptor)
 
-    fun render(context: WidgetRenderContext, renderer: KCMSGossRenderer) = renderer.apply {
-        +context.getProperty(id, propertyDescriptor.key)?.text
-    }
+    fun getValue(p: PageTemplateRenderContext): String? = p.getProperty(id, propertyDescriptor.key)?.text
 }

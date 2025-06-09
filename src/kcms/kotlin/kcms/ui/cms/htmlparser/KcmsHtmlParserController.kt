@@ -4,23 +4,22 @@ import kcms.common.nullIfBlank
 import kiss.gossr.spring.RouteHandler
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
-import org.jsoup.nodes.Node
 import org.jsoup.nodes.TextNode
 import org.springframework.stereotype.Component
 import org.springframework.web.servlet.View
 
 @Component
 @RouteHandler
-class CMSHtmlParserContoller {
+class KcmsHtmlParserController {
     @RouteHandler
-    fun parseHtml(route: CmsHtmlParseRoute): View {
+    fun parseHtml(route: KcmsHtmlParseRoute): View {
         val code = StringBuilder()
 
         Jsoup.parse(route.html ?: "")?.body()?.let {
             convertToCode(code, it)
         }
 
-        return CMSHtmlParsePage(
+        return KcmsHtmlParsePage(
             route,
             code.toString()
         )

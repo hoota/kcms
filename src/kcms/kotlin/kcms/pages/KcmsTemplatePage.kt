@@ -1,48 +1,51 @@
 package kcms.pages
 
-import kcms.ui.cms.CommonCMSPage
+import kcms.ui.cms.CommonKcmsPage
 import kcms.ui.cms.MenuModule
-import kcms.widgets.WidgetContainer
 import kcms.widgets.Widget
-import kcms.widgets.WidgetPropertyType
+import kcms.widgets.WidgetContainer
 import kiss.gossr.spring.GetRoute
 import kiss.gossr.spring.PostRoute
 
-data class CmsTemplateRoute(
+data class KcmsTemplateRoute(
     val templateId: String
 ) : GetRoute
 
-data class CmsTemplateSaveRoute(
+data class KcmsTemplateSaveRoute(
     val templateId: String,
-    val properties: MutableMap<String, MutableMap<String, String>> = HashMap(),
+    override val properties: MutableMap<String, MutableMap<String, String>> = HashMap(),
+    override val listProperties: MutableMap<String, MutableMap<String, MutableList<String>>> = HashMap(),
+    override val enumMapProperties: MutableMap<String, MutableMap<String, String>> = HashMap(),
     val doSave: String? = null,
-) : PostRoute
+) : PostRoute, WidgetPropertiesSaveRoute
 
-class CmsTemplatePage(
+class KcmsTemplatePage(
     val template: PageTemplate,
     val properties: Map<String, Map<String, PageProperty>>,
-) : CommonCMSPage(
+) : CommonKcmsPage(
     title = "Page Template - ${template.id}",
     module = MenuModule.TEMPLATES
 ) {
 
     override fun pageBody() {
-        FORM(CmsTemplateSaveRoute(templateId = template.id)) { route ->
+        FORM(KcmsTemplateSaveRoute(templateId = template.id)) { route ->
             HIDDEN(route::templateId)
             drawSharedWidgets(route, template.widgets)
             SUBMIT("btn btn-primary", route::doSave, "Save")
         }
     }
 
-    private fun hasSharedProperties(w: Widget): Boolean = w.properties.any { it.shared } ||
+    private fun hasSharedProperties(w: Widget): Boolean = w.properties.any { it.globalScope } ||
         (w is WidgetContainer && w.children?.any { hasSharedProperties(it) } ?: false)
 
-    private fun drawSharedWidgets(route: CmsTemplateSaveRoute, widgets: List<Widget>?) {
+    private fun drawSharedWidgets(route: KcmsTemplateSaveRoute, widgets: List<Widget>?) {
+        val kcmsPropertiesEditBlock = KcmsPropertiesEditBlock(route, properties)
+
         widgets?.filter { hasSharedProperties(it) }?.forEach { w ->
             B { +w.title }
             DIV("ml-4") {
                 namePrefix(route::properties, w.id) {
-                    CmsPropertiesEditBlock().draw(properties, w.id, w.properties.filter { it.shared })
+                    kcmsPropertiesEditBlock.draw(w.id, w.properties.filter { it.globalScope })
                 }
 
                 if(w is WidgetContainer) drawSharedWidgets(route, w.children)

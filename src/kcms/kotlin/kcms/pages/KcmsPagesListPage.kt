@@ -1,14 +1,14 @@
 package kcms.pages
 
-import kcms.ui.cms.CommonCMSPage
+import kcms.ui.cms.CommonKcmsPage
 import kcms.ui.cms.MenuModule
 import kcms.ui.cms.PagedData
 import kcms.ui.cms.Paginator
 
-class CMSPagesListPage(
-    val route: CMSPagesController.CmsPagesListRoute,
+class KcmsPagesListPage(
+    val route: KcmsPagesController.KcmsPagesListRoute,
     val pages: PagedData<Page>
-) : CommonCMSPage(
+) : CommonKcmsPage(
     title = "Pages",
     module = MenuModule.PAGES
 ) {
@@ -16,7 +16,7 @@ class CMSPagesListPage(
     override fun preTitle() {
         A("btn btn-primary") {
             style("float: right;")
-            href(CMSPagesController.CmsPageRoute(-1))
+            href(KcmsPagesController.KcmsPageRoute(-1))
             +"New Page"
         }
     }
@@ -45,25 +45,25 @@ class CMSPagesListPage(
                     TR {
                         TD {
                             A {
-                                href(CMSPagesController.CmsPageRoute(p.id))
+                                href(KcmsPagesController.KcmsPageRoute(p.id))
                                 +p.id.toString()
                             }
                         }
                         TD {
                             A {
-                                href(CMSPagesController.CmsPageRoute(p.id))
+                                href(p.slug)
                                 +p.slug
                             }
                         }
                         TD {
                             A {
-                                href(CMSPagesController.CmsPageRoute(p.id))
+                                href(KcmsPagesController.KcmsPageRoute(p.id))
                                 +p.title
                             }
                         }
                         TD {
                             A {
-                                href(CmsTemplateRoute(p.template))
+                                href(KcmsTemplateRoute(p.template))
                                 +p.template
                             }
                         }

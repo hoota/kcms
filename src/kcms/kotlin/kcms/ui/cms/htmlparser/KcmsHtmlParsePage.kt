@@ -1,17 +1,17 @@
 package kcms.ui.cms.htmlparser
 
-import kcms.ui.cms.CommonCMSPage
+import kcms.ui.cms.CommonKcmsPage
 import kiss.gossr.spring.GetRoute
 import kiss.gossr.spring.PostRoute
 
-data class CmsHtmlParseRoute(
+data class KcmsHtmlParseRoute(
     val html: String? = null,
 ): GetRoute, PostRoute
 
-class CMSHtmlParsePage(
-    val route: CmsHtmlParseRoute,
+class KcmsHtmlParsePage(
+    val route: KcmsHtmlParseRoute,
     val code: String
-) : CommonCMSPage(
+) : CommonKcmsPage(
     title = "HTML Parser"
 ) {
 

@@ -1,17 +1,19 @@
 package kcms.ui.cms
 
-import kcms.enums.CmsEnumsCategoriesRoute
 import kcms.enums.EnumValueService
-import kcms.jobs.JobsController
-import kcms.pages.CMSPagesController
-import kcms.ui.KCMSGossRenderer
-import kcms.ui.cms.htmlparser.CmsHtmlParseRoute
+import kcms.enums.KcmsEnumsCategoriesRoute
+import kcms.files.KcmsFilesController
+import kcms.jobs.JobsRunnerService
+import kcms.jobs.KcmsJobsController
+import kcms.pages.KcmsPagesController
+import kcms.ui.KcmsGossRenderer
+import kcms.ui.cms.htmlparser.KcmsHtmlParseRoute
 
 enum class MenuModule {
-    PAGES, JOBS, TEMPLATES, ENUMS;
+    PAGES, JOBS, TEMPLATES, ENUMS, FILES;
 }
 
-class CmsMenuBlock : KCMSGossRenderer() {
+class KcmsMenuBlock : KcmsGossRenderer() {
 
     fun draw(module: MenuModule?) {
         EL("NAV") {
@@ -30,7 +32,7 @@ class CmsMenuBlock : KCMSGossRenderer() {
             }
             A {
                 classes("navbar-brand p-0")
-                href(CMSController.CmsRoute())
+                href(KcmsController.KcmsRoute())
                 IMG("/cms-logo.png", height = 40)
             }
             DIV("collapse navbar-collapse") {
@@ -43,7 +45,7 @@ class CmsMenuBlock : KCMSGossRenderer() {
 
                         A {
                             classes("nav-link")
-                            href(CMSPagesController.CmsPagesListRoute())
+                            href(KcmsPagesController.KcmsPagesListRoute())
                             +"Pages"
                         }
                     }
@@ -53,17 +55,27 @@ class CmsMenuBlock : KCMSGossRenderer() {
 
                         A {
                             classes("nav-link")
-                            href(CMSPagesController.CmsTemplatesListRoute())
+                            href(KcmsPagesController.KcmsTemplatesListRoute())
                             +"Templates"
                         }
                     }
                     LI {
                         classes("nav-item")
+                        if(module == MenuModule.FILES) classes("active")
+
+                        A {
+                            classes("nav-link")
+                            href(KcmsFilesController.KcmsFilesRoute())
+                            +"Files"
+                        }
+                    }
+                    if(JobsRunnerService.instance.jobs.isNotEmpty()) LI {
+                        classes("nav-item")
                         if(module == MenuModule.JOBS) classes("active")
 
                         A {
                             classes("nav-link")
-                            href(JobsController.AdminJobsListRoute())
+                            href(KcmsJobsController.AdminJobsListRoute())
                             +"Jobs"
                         }
                     }
@@ -73,7 +85,7 @@ class CmsMenuBlock : KCMSGossRenderer() {
 
                         A {
                             classes("nav-link")
-                            href(CmsEnumsCategoriesRoute())
+                            href(KcmsEnumsCategoriesRoute())
                             +"Enums"
                         }
                     }
@@ -83,7 +95,7 @@ class CmsMenuBlock : KCMSGossRenderer() {
 
                         A {
                             classes("nav-link")
-                            href(CmsHtmlParseRoute())
+                            href(KcmsHtmlParseRoute())
                             +"Html2Code"
                         }
                     }

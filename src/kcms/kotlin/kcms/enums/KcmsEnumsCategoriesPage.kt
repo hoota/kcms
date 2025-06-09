@@ -1,12 +1,12 @@
 package kcms.enums
 
-import kcms.ui.cms.CommonCMSPage
+import kcms.ui.cms.CommonKcmsPage
 import kcms.ui.cms.MenuModule
 import kiss.gossr.spring.GetRoute
 
-class CmsEnumsCategoriesRoute : GetRoute
+class KcmsEnumsCategoriesRoute : GetRoute
 
-class CmsEnumsCategoriesPage : CommonCMSPage(
+class KcmsEnumsCategoriesPage : CommonKcmsPage(
     title = "Enum Categories",
     module = MenuModule.ENUMS
 ) {
@@ -22,7 +22,7 @@ class CmsEnumsCategoriesPage : CommonCMSPage(
                     TR {
                         TD {
                             A {
-                                href(CmsEnumCategoryRoute(c.id))
+                                href(KcmsEnumCategoryRoute(c.id))
                                 +c.title
                             }
                         }

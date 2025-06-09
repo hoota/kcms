@@ -8,7 +8,7 @@ import javax.annotation.PostConstruct
 
 @Service
 class EnumValueService(
-    val categories: List<CmsEnumCategory>,
+    val categories: List<KcmsEnumCategory>,
     val enumValueRepository: EnumValueRepository,
 ) : Caching {
 
@@ -18,8 +18,12 @@ class EnumValueService(
         .build<String, List<EnumValue>>()
 
     fun getEnumValues(category: String): List<EnumValue> = enumValuesCacheByCategory.get(category) {
-        enumValueRepository.findByCategory(category).map { it.copy() }
+        enumValueRepository.findByCategory(category).sortedBy { it.order }.map { it.copy() }
     }
+
+    fun getEnumValues(category: KcmsEnumCategory?): List<EnumValue> = category?.let {
+        getEnumValues(it.id)
+    } ?: emptyList()
 
     override fun resetCaches() {
         enumValuesCacheByCategory.invalidateAll()
@@ -35,7 +39,7 @@ class EnumValueService(
     }
 }
 
-interface CmsEnumCategory {
+interface KcmsEnumCategory {
     val id: String
     val title: String
 }

@@ -15,18 +15,21 @@ import javax.persistence.Table
 data class PageFile(
     @Id
     override val id: Long = 0,
-    val pageId: Long,
+    val pageId: Long?,
     @Enumerated(EnumType.STRING)
     val type: PageFileType,
     val origName: String,
+    val size: Long,
+    val symlink: Long? = null,
 ) : EntityWithLongId {
 
-    fun url(): String = "/files/${pageId % 100}/$pageId/$id.${type.ext.first()}"
-    fun urlWithHeight(h: Int): String = "/files/${pageId % 100}/$pageId/$id.h$h.${type.ext.first()}"
-    fun urlWithWidth(w: Int): String = "/files/${pageId % 100}/$pageId/$id.w$w.${type.ext.first()}"
+    fun url(): String = (symlink ?: id).let { id -> "/files/${id / FILES_PER_FOLDER}/$id.${type.ext.first()}" }
+    fun urlWithHeight(h: Int): String = (symlink ?: id).let { id -> "/files/${id / FILES_PER_FOLDER}/$id.h$h.${type.ext.first()}" }
+    fun urlWithWidth(w: Int): String = (symlink ?: id).let { id -> "/files/${id / FILES_PER_FOLDER}/$id.w$w.${type.ext.first()}" }
 
     companion object {
         const val GENERATOR_NAME = "file_id_seq"
+        const val FILES_PER_FOLDER = 200
     }
 }
 
@@ -44,7 +47,8 @@ enum class PageFileType(
 
 @Repository
 interface PageFileRepository : LongIdCrudRepository<PageFile> {
-    fun findByPageId(pageId: Long): List<PageFile>
+    fun findByPageId(pageId: Long?): List<PageFile>
+    fun findByPageIdIn(pageIds: Iterable<Long>): List<PageFile>
 
     @Query("""SELECT nextval('${PageFile.GENERATOR_NAME}')""", nativeQuery = true)
     fun nextId(): Long

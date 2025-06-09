@@ -1,14 +1,12 @@
 package kcms.pages
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import kcms.common.EntityWithLongId
 import kcms.common.LongIdCrudRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
 import javax.persistence.Entity
-import javax.persistence.GeneratedValue
-import javax.persistence.GenerationType
 import javax.persistence.Id
-import javax.persistence.SequenceGenerator
 import javax.persistence.Table
 
 @Entity
@@ -20,7 +18,13 @@ data class Page(
     var title: String,
     var template: String,
     var parentId: Long? = null,
+    var published: Boolean = false,
 ) : EntityWithLongId {
+
+    @get:JsonIgnore
+    val parent: Page? get() = parentId?.let {
+        PageTemplatesService.instance.getPage(it)
+    }
 
     companion object {
         const val GENERATOR_NAME = "page_id_seq"
@@ -30,6 +34,7 @@ data class Page(
 @Repository
 interface PagesRepository : LongIdCrudRepository<Page> {
     fun findBySlug(slug: String): Page?
+    fun findByParentId(parentId: Long): List<Page>
 
     @Query("""SELECT nextval('${Page.GENERATOR_NAME}')""", nativeQuery = true)
     fun nextPageId(): Long

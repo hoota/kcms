@@ -1,0 +1,176 @@
+package kcms.pages
+
+import kcms.files.KcmsFilesListBlock
+import kcms.files.KcmsImageScale
+import kcms.files.KcmsImageScaleType
+import kcms.files.PageFile
+import kcms.ui.cms.CommonKcmsPage
+import kcms.ui.cms.MenuModule
+import kcms.widgets.Widget
+import kcms.widgets.WidgetContainer
+import kiss.gossr.spring.PostRoute
+import org.springframework.stereotype.Component
+
+interface WidgetPropertiesSaveRoute {
+    val properties: MutableMap<String, MutableMap<String, String>>
+    val listProperties: MutableMap<String, MutableMap<String, MutableList<String>>>
+    val enumMapProperties: MutableMap<String, MutableMap<String, String>>
+}
+
+data class KcmsPageSaveRoute(
+    val pageId: Long,
+    val pageSlug: String,
+    val pageTitle: String,
+    val pageTemplate: String,
+    val parentId: Long?,
+    val published: Boolean?,
+    override val properties: MutableMap<String, MutableMap<String, String>> = HashMap(),
+    override val listProperties: MutableMap<String, MutableMap<String, MutableList<String>>> = HashMap(),
+    override val enumMapProperties: MutableMap<String, MutableMap<String, String>> = HashMap(),
+    val doSave: String? = null,
+    val doSaveAndContinue: String? = null,
+    val doRemove: String? = null,
+) : PostRoute, WidgetPropertiesSaveRoute
+
+@Component
+data class KcmsImageScaleH100(
+    override val size: Int = 100,
+    override val type: KcmsImageScaleType = KcmsImageScaleType.HEIGHT
+) : KcmsImageScale
+
+@Component
+data class KcmsImageScaleW100(
+    override val size: Int = 100,
+    override val type: KcmsImageScaleType = KcmsImageScaleType.WIDTH
+) : KcmsImageScale
+
+class KcmsPagePage(
+    val templates: List<PageTemplate>,
+    val parents: List<Page>,
+    val p: Page,
+    val template: PageTemplate?,
+    val properties: Map<String, Map<String, PageProperty>>,
+    val files: List<PageFile>,
+) : CommonKcmsPage(
+    title = "Page #${p.id} // ${p.title}",
+    module = MenuModule.PAGES,
+    showTitleAsHeader = false
+) {
+
+    override fun pageBody() {
+        H3 {
+            classes("mt-3 page-title")
+            A {
+                href(p.slug)
+                +"Page #${p.id}"
+            }
+            +" // ${p.title}"
+        }
+
+        FORM(KcmsPageSaveRoute(
+            pageId = p.id,
+            pageSlug = p.slug,
+            pageTitle = p.title,
+            pageTemplate = p.template,
+            parentId = p.parentId,
+            published = p.published,
+        )) { route ->
+            HIDDEN(route::pageId)
+
+            DIV("row") {
+                DIV("col-12 form-group col-md") {
+                    LABEL {
+                        +"Page Slug (URI)"
+                    }
+                    INPUT("form-control") {
+                        nameValueString(route::pageSlug)
+                    }
+                }
+                DIV("col-12 form-group col-md") {
+                    LABEL {
+                        +"Parent"
+                    }
+                    SELECT(route::parentId) {
+                        classes("form-control")
+                        OPTION("-- no parent --")
+                        parents.forEach { p ->
+                            OPTION(p.id, p.title)
+                        }
+                    }
+                }
+                DIV("col-12 form-group col-md") {
+                    LABEL {
+                        +"Page Template"
+                    }
+                    SELECT(route::pageTemplate) {
+                        classes("form-control")
+                        templates.forEach { t ->
+                            OPTION(t.id)
+                        }
+                    }
+                }
+                DIV("col-12 form-group col-md-1") {
+                    LABEL {
+                        +"Published"
+                    }
+                    DIV("ml-4 mt-1") {
+                        CHECKBOX(route::published, withId = true)
+                    }
+                }
+            }
+
+            DIV("form-group") {
+                LABEL {
+                    +"Page Title"
+                }
+                INPUT("form-control") {
+                    nameValueString(route::pageTitle)
+                }
+            }
+
+            H4 { +"Page Widgets" }
+            drawPageWidgets(route, template?.widgets)
+
+            SUBMIT("btn btn-primary", route::doSave, "Save")
+            SUBMIT("btn btn-success", route::doSaveAndContinue, "Save and Continue")
+
+            if(p.id > 0) SUBMIT("btn btn-danger", route::doRemove, "Remove Page") {
+                onClick("""return window.confirm('Are you sure?')""")
+            }
+        }
+
+        if(p.id >= 0) KcmsFilesListBlock(
+            pageId = p.id,
+            files = files
+        ).draw {
+            H4("mt-4") { +"Files" }
+        }
+    }
+
+    private fun hasPageProperties(w: Widget): Boolean = w.properties.any { !it.globalScope } ||
+        (w is WidgetContainer && w.children?.any { hasPageProperties(it) } ?: false)
+
+    private fun drawPageWidgets(route: KcmsPageSaveRoute, widgets: List<Widget>?) {
+        val kcmsPropertiesEditBlock = KcmsPropertiesEditBlock(route, properties)
+
+        widgets?.filter { hasPageProperties(it) }?.forEach { w ->
+            H5 { +w.title }
+            DIV("ml-4") {
+                val rows = w.propertiesRows
+                if(rows != null) rows.filter { it.any { !it.globalScope } }.forEach { list ->
+                    DIV("row") {
+                        list.filterNot { it.globalScope }.forEach { p ->
+                            DIV("col-12 col-md") {
+                                kcmsPropertiesEditBlock.draw(w.id, listOf(p))
+                            }
+                        }
+                    }
+                } else {
+                    kcmsPropertiesEditBlock.draw(w.id, w.properties.filterNot { it.globalScope })
+                }
+
+                if(w is WidgetContainer) drawPageWidgets(route, w.children)
+            }
+        }
+    }
+}

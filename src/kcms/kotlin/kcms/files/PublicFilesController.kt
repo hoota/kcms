@@ -1,11 +1,13 @@
 package kcms.files
 
+import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Controller
 import org.springframework.util.StreamUtils
 import org.springframework.web.bind.annotation.GetMapping
 import java.io.File
 import java.net.URLConnection
+import java.util.concurrent.TimeUnit
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
@@ -34,6 +36,11 @@ class PublicFilesController(
         }
 
         response.contentType = mimeType
-        StreamUtils.copy(file.inputStream(), response.outputStream)
+        response.setDateHeader(HttpHeaders.EXPIRES, System.currentTimeMillis() + TimeUnit.DAYS.toMillis(365))
+        response.setHeader(HttpHeaders.CACHE_CONTROL, "public, max-age=" + (365L * 24 * 60 * 60))
+
+        file.inputStream().use {
+            StreamUtils.copy(it, response.outputStream)
+        }
     }
 }
