@@ -33,7 +33,7 @@ class KcmsMenuBlock : KcmsGossRenderer() {
             A {
                 classes("navbar-brand p-0")
                 href(KcmsController.KcmsRoute())
-                IMG("/cms-logo.png", height = 40)
+                IMG("/kcms/logo.png", height = 40)
             }
             DIV("collapse navbar-collapse") {
                 id("navbarSupportedContent")

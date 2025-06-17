@@ -33,9 +33,7 @@ class KcmsPagesController(
     fun template(route: KcmsTemplateRoute): View {
         return KcmsTemplatePage(
             pageTemplatesService.getTemplate(route.templateId)!!,
-            properties = pagePropertyRepository.findByIdPageId(0L).groupBy { it.id.widgetId }.mapValues {
-                it.value.associateBy { it.id.propertyId }
-            }
+            properties = pagePropertyRepository.findByIdPageId(0L).associateBy { it.id.propertyId }
         )
     }
 
@@ -63,7 +61,7 @@ class KcmsPagesController(
     ): View {
         val pages = pageTemplatesService.searchPages(
             query = route.query,
-            templateId = null,
+            templateIds = null,
             checkProperties = route.searchContent == true
         )
 
@@ -89,66 +87,53 @@ class KcmsPagesController(
 
         return KcmsPagePage(
             templates = pageTemplatesService.templates,
-            parents = pagesRepository.findAll().filter {
-                pageTemplatesService.getTemplate(it.template) is CouldBeParentPageTemplate
-            },
+            parents = pageTemplatesService.getPagesTree().values.map { it.p },
             template = pageTemplatesService.getTemplate(p.template),
             p = p,
-            properties = pagePropertyRepository.findByIdPageId(p.id).groupBy { it.id.widgetId }.mapValues {
-                it.value.associateBy { it.id.propertyId }
-            },
+            properties = pagePropertyRepository.findByIdPageId(p.id).associateBy { it.id.propertyId },
             files = pageFileRepository.findByPageId(p.id)
         )
     }
 
     fun savePageProperties(em: EntityManager, route: WidgetPropertiesSaveRoute, pageId: Long) {
-        route.properties.forEach { (widgetId, props) ->
-            props.forEach { (propertyId, value) ->
-                em.merge(PageProperty(
-                    id = PagePropertyId(
-                        pageId = pageId,
-                        widgetId = widgetId,
-                        propertyId = propertyId,
-                    ),
-                    text = value,
-                    number = value.toBigDecimalOrNull(),
-                    date = try { LocalDate.parse(value) }catch(e: Exception) { null }
-                ))
-            }
+        route.properties.forEach { (propertyId, value) ->
+            em.merge(PageProperty(
+                id = PagePropertyId(
+                    pageId = pageId,
+                    propertyId = propertyId,
+                ),
+                text = value,
+                number = value.toBigDecimalOrNull(),
+                date = try { LocalDate.parse(value) }catch(e: Exception) { null }
+            ))
         }
-        route.listProperties.forEach { (widgetId, props) ->
-            props.forEach { (propertyId, values) ->
-                em.merge(PageProperty(
-                    id = PagePropertyId(
-                        pageId = pageId,
-                        widgetId = widgetId,
-                        propertyId = propertyId,
-                    ),
-                ).also { it.asList = values.mapNotNull { it.nullIfBlank() } })
-            }
+        route.listProperties.forEach { (propertyId, values) ->
+            em.merge(PageProperty(
+                id = PagePropertyId(
+                    pageId = pageId,
+                    propertyId = propertyId,
+                ),
+            ).also { it.asList = values.mapNotNull { it.nullIfBlank() } })
         }
-        route.enumMapProperties.forEach { (widgetId, props) ->
-            props.map { p ->
-                p.key.split("@", limit = 2).let {
-                    Triple(it[0], it[1], p.value)
-                }
-            }.groupBy { it.first }.forEach { (propertyId, map) ->
-                val map = map.map {
-                    it.second.toLongOrNull() to it.third.nullIfBlank()
-                }.filter {
-                    it.first != null && it.second != null
-                }.associate {
-                    it.first!! to it.second!!
-                }
+        route.enumMapProperties.map { p ->
+            p.key.split("@", limit = 2).let {
+                Triple(it[0], it[1], p.value)
+            }
+        }.groupBy { it.first }.forEach { (propertyId, map) ->
+            val map = map.map {
+                it.second.toLongOrNull() to it.third.nullIfBlank()
+            }.filter {
+                it.first != null && it.second != null
+            }.associate {
+                it.first!! to it.second!!
+            }
 
-                em.merge(PageProperty(
-                    id = PagePropertyId(
-                        pageId = pageId,
-                        widgetId = widgetId,
-                        propertyId = propertyId,
-                    ),
-                ).also { it.asMap = map } )
-            }
+            em.merge(PageProperty(
+                id = PagePropertyId(
+                    pageId = pageId,
+                    propertyId = propertyId,
+                ),
+            ).also { it.asMap = map } )
         }
     }
 

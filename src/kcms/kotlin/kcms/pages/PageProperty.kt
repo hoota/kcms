@@ -2,6 +2,7 @@ package kcms.pages
 
 import kcms.common.CrudRepository
 import kcms.ui.KcmsGossRenderer
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.stereotype.Repository
 import java.io.Serializable
 import java.math.BigDecimal
@@ -12,7 +13,7 @@ import javax.persistence.Entity
 import javax.persistence.Table
 
 @Entity
-@Table(name = "page_property")
+@Table(name = "kcms_page_property")
 data class PageProperty(
     @EmbeddedId
     val id: PagePropertyId,
@@ -48,7 +49,6 @@ class PagePropertyMapValue : LinkedHashMap<Long, String>()
 @Embeddable
 data class PagePropertyId(
     val pageId: Long,
-    val widgetId: String,
     val propertyId: String,
 ) : Serializable
 
@@ -56,4 +56,7 @@ data class PagePropertyId(
 interface PagePropertyRepository : CrudRepository<PageProperty, PagePropertyId> {
     fun findByIdPageId(pageId: Long): List<PageProperty>
     fun findByIdPageIdIn(pageIds: Iterable<Long>): List<PageProperty>
+
+    @Modifying
+    fun deleteByIdPageId(pageId: Long): Int
 }

@@ -11,7 +11,7 @@ import javax.persistence.Id
 import javax.persistence.Table
 
 @Entity
-@Table(name = "file")
+@Table(name = "kcms_file")
 data class PageFile(
     @Id
     override val id: Long = 0,

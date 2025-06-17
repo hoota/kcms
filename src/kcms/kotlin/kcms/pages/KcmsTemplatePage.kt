@@ -13,15 +13,15 @@ data class KcmsTemplateRoute(
 
 data class KcmsTemplateSaveRoute(
     val templateId: String,
-    override val properties: MutableMap<String, MutableMap<String, String>> = HashMap(),
-    override val listProperties: MutableMap<String, MutableMap<String, MutableList<String>>> = HashMap(),
-    override val enumMapProperties: MutableMap<String, MutableMap<String, String>> = HashMap(),
+    override val properties: MutableMap<String, String> = HashMap(),
+    override val listProperties: MutableMap<String, MutableList<String>> = HashMap(),
+    override val enumMapProperties: MutableMap<String, String> = HashMap(),
     val doSave: String? = null,
 ) : PostRoute, WidgetPropertiesSaveRoute
 
 class KcmsTemplatePage(
     val template: PageTemplate,
-    val properties: Map<String, Map<String, PageProperty>>,
+    val properties: Map<String, PageProperty>,
 ) : CommonKcmsPage(
     title = "Page Template - ${template.id}",
     module = MenuModule.TEMPLATES
@@ -44,9 +44,7 @@ class KcmsTemplatePage(
         widgets?.filter { hasSharedProperties(it) }?.forEach { w ->
             B { +w.title }
             DIV("ml-4") {
-                namePrefix(route::properties, w.id) {
-                    kcmsPropertiesEditBlock.draw(w.id, w.properties.filter { it.globalScope })
-                }
+                kcmsPropertiesEditBlock.draw(w.properties.filter { it.globalScope })
 
                 if(w is WidgetContainer) drawSharedWidgets(route, w.children)
             }

@@ -40,7 +40,7 @@ class PublicFilesController(
         response.setHeader(HttpHeaders.CACHE_CONTROL, "public, max-age=" + (365L * 24 * 60 * 60))
 
         file.inputStream().use {
-            StreamUtils.copy(it, response.outputStream)
+            StreamUtils.copy(it, response.outputStream.buffered(64000))
         }
     }
 }

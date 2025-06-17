@@ -95,3 +95,18 @@ databaseChangeLog:
               ALTER TABLE public.file ADD FOREIGN KEY (symlink) REFERENCES public.file(id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE;
               CREATE INDEX "file_symlink" ON file(symlink);
 
+  - changeSet:
+      id: big_refactoring
+      author: andrey
+      changes:
+        - sql:
+            sql: >
+              ALTER TABLE enum RENAME TO kcms_enum;
+              ALTER TABLE file RENAME TO kcms_file;
+              ALTER TABLE page RENAME TO kcms_page;
+              ALTER TABLE page_property RENAME TO kcms_page_property;
+              UPDATE kcms_page_property SET property_id = widget_id||'.'||property_id;
+              ALTER TABLE kcms_page_property DROP widget_id;
+              ALTER TABLE kcms_page_property ADD CONSTRAINT "kcms_page_property_page_id_property_id" PRIMARY KEY (page_id, property_id);
+              
+

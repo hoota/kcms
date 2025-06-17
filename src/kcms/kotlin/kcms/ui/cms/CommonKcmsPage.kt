@@ -72,6 +72,7 @@ abstract class CommonKcmsPage(
                 SCRIPT(src = "https://ajax.googleapis.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.js")
                 SCRIPT(src = "https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js")
                 SCRIPT(src = "https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/js/bootstrap.min.js")
+                SCRIPT(src = getResourceUrlWithVersion("/assets/kcms-script.js"))
 
                 EL("title") {
                     +title
@@ -113,80 +114,10 @@ abstract class CommonKcmsPage(
 
     private fun drawScripts() {
         SCRIPT(code = """
-
 $(document).ready($(function() { 
     $('[data-toggle="tooltip"]').tooltip() 
     $('.js-date').datepicker({dateFormat: "yy-mm-dd"});
 }));
-                    
-function openCommonModal(event, url) {
-    event.stopPropagation();
-    event.preventDefault();
-    $(document).trigger('click')
-
-    fetch(url).then(response => {
-        if (response.redirected) {
-            window.location.href = response.url;
-        }
-        if(response.ok) {
-            response.text().then(html => {
-                var placeholder = $("<div/>").append(html)
-                $(document.body).append(placeholder);
-                placeholder.find(".modal").first().modal('show').on("hidden.bs.modal", function() { placeholder.remove(); });
-            }) 
-        } else {
-            window.alert("Http Request not OK\nStatus:" + response.status + "\nURL: " + response.url)
-        }
-    }).catch(function(err) {
-        window.alert(err);
-    });
-    
-    return false
-}
-
-function ajaxFormSubmit(form, event) {
-    try {
-        var data = new FormData(form)
-        if(event?.submitter?.name) {
-            data.append(event?.submitter?.name, event?.submitter?.value)
-        }
-        form = $(form)
-        form.closest('.modal').modal('hide')
-        $('.modal-backdrop').remove();
-        var actionUrl = form.attr('action');
-        var method = form.attr('method') || 'GET';
-        var request = method.toLowerCase() === 'get' ? { method: method } : { method: method, body: data }
-        fetch(actionUrl, request).then(response => {
-            if (response.redirected) {
-                window.location.href = response.url;
-            }
-            if(response.ok) response.text().then(html => {
-                try {
-                    var el = $(html);
-                    if(el.hasClass('modal')) {
-                        var placeholder = $("<div/>").append(el)
-                        $(document.body).append(placeholder);
-                        placeholder.find(".modal").first().modal('show').on("hidden.bs.modal", function() { placeholder.remove(); }); 
-                    } else {
-                        var elId = el.attr('id')
-                        $(elId ? ('#' + elId) : form).replaceWith(el)
-                    }
-                } catch(e) {
-                    window.alert("Response is not valid jQuery selector");
-                }
-            });
-            form.find('.js-ajaxFormSubmit-disable').attr('disabled', null).removeClass('js-ajaxFormSubmit-disable');
-        }).catch(function(err) {
-            window.alert(err);
-        });
-
-        form.find('button, input[type=submit]:not(:disabled)').attr('disabled', 'disabled').addClass("js-ajaxFormSubmit-disable")
-    } catch(e){
-        console.error(e)
-    }
-    return false
-}
-
     """)
 
     }

@@ -10,7 +10,7 @@ import javax.persistence.Id
 import javax.persistence.Table
 
 @Entity
-@Table(name = "page")
+@Table(name = "kcms_page")
 data class Page(
     @Id
     override val id: Long = 0,
@@ -35,6 +35,15 @@ data class Page(
 interface PagesRepository : LongIdCrudRepository<Page> {
     fun findBySlug(slug: String): Page?
     fun findByParentId(parentId: Long): List<Page>
+    fun findByParentIdIn(parentIds: Iterable<Long>): List<Page>
+    fun findByTemplateIn(templates: Iterable<String>): List<Page>
+
+    @Query("""
+        SELECT p.* FROM kcms_page p WHERE p.id IN (
+            SELECT c.parent_id FROM kcms_page c WHERE c.parent_id IS NOT NULL
+        )
+    """, nativeQuery = true)
+    fun findParents(): List<Page>
 
     @Query("""SELECT nextval('${Page.GENERATOR_NAME}')""", nativeQuery = true)
     fun nextPageId(): Long

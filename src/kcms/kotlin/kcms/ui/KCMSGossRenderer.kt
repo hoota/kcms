@@ -24,6 +24,7 @@ import org.springframework.web.multipart.MultipartFile
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.util.concurrent.ConcurrentHashMap
+import javax.servlet.http.Cookie
 
 @Suppress("FunctionNaming")
 open class KcmsGossRenderer : GossSpringRenderer() {
@@ -31,6 +32,10 @@ open class KcmsGossRenderer : GossSpringRenderer() {
     override fun csrf(): Pair<String, String>? = (request()?.getAttribute("_csrf") as? CsrfToken)?.let {
         it.parameterName to it.token
     }
+
+    fun Array<Cookie>.getValue(name: String): String? = this.firstOrNull {
+        it.name.equals(name, ignoreCase = true)
+    }?.value
 
     fun getResourceUrlWithVersion(path: String): String = resourceVersions.computeIfAbsent(path) {
         val resource = ClassPathResource("static$path")
@@ -88,7 +93,7 @@ open class KcmsGossRenderer : GossSpringRenderer() {
         }
     }
 
-    protected fun ajaxForm(condition: String = "true") {
+    fun ajaxForm(condition: String = "true") {
         onSubmit("return ($condition) && ajaxFormSubmit(this, event)")
     }
 

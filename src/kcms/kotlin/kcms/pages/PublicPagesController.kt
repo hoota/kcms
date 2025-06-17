@@ -8,6 +8,7 @@ import org.springframework.http.MediaType
 import org.springframework.stereotype.Controller
 import org.springframework.util.StreamUtils
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.servlet.View
 import java.net.URLConnection
 import java.net.URLDecoder
 import java.util.concurrent.TimeUnit
@@ -37,11 +38,19 @@ class PublicPagesController(
 
             response.contentType = mimeType
             resource.inputStream.use {
-                StreamUtils.copy(it, response.outputStream)
+                StreamUtils.copy(it, response.outputStream.buffered(64000))
             }
             return null
         }
 
+        return pageView(request, response, uri)
+    }
+
+    fun pageView(
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+        uri: String
+    ): View? {
         val page = pageTemplatesService.getPage(uri)
             ?: pageTemplatesService.getPage(URLDecoder.decode(uri, "utf-8"))
             ?: pageTemplatesService.getPage(uri.trimEnd('/'))

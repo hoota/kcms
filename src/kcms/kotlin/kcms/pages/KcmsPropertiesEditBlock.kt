@@ -9,15 +9,14 @@ import java.util.*
 
 class KcmsPropertiesEditBlock(
     val route: WidgetPropertiesSaveRoute,
-    val values: Map<String, Map<String, PageProperty>>
+    val values: Map<String, PageProperty>
 ) : KcmsGossRenderer() {
 
     fun draw(
-        widgetId: String,
         properties: List<WidgetPropertyDescriptor>
     ) {
         properties.forEach { p ->
-            val v = values.get(widgetId)?.get(p.key)
+            val v = values.get(p.key)
             DIV("form-group") {
                 LABEL("font-weight-bold") {
                     +p.title
@@ -25,27 +24,27 @@ class KcmsPropertiesEditBlock(
                 when(p.type) {
                     WidgetPropertyType.TEXT -> TEXTAREA("form-control") {
                         style("width: 100%; height: 200px")
-                        namePrefix(route::properties, widgetId) { name(p.key) }
+                        name(p.key)
                         required(p.required)
                         +v?.text
                     }
 
                     WidgetPropertyType.STRING -> INPUT("form-control") {
-                        namePrefix(route::properties, widgetId) { name(p.key) }
+                        name(p.key)
                         type("text")
                         required(p.required)
                         value(v?.text)
                     }
 
                     WidgetPropertyType.DATE -> INPUT("form-control") {
-                        namePrefix(route::properties, widgetId) { name(p.key) }
+                        name(p.key)
                         type("date")
                         required(p.required)
                         value(v?.date)
                     }
 
                     WidgetPropertyType.NUMBER -> INPUT("form-control") {
-                        namePrefix(route::properties, widgetId) { name(p.key) }
+                        name(p.key)
                         type("number")
                         required(p.required)
                         value(v?.number)
@@ -54,19 +53,18 @@ class KcmsPropertiesEditBlock(
                     }
 
                     WidgetPropertyType.ENUM -> SELECT("form-control") {
-                        namePrefix(route::properties, widgetId) { name(p.key) }
+                        name(p.key)
                         if(!p.required) OPTION("--")
                         EnumValueService.instance.getEnumValues(p.enumCategory).forEach { e ->
                             OPTION(e.id, e.value, selected = v?.number?.toLong() == e.id)
                         }
                     }
 
-                    WidgetPropertyType.ENUMS_SET -> namePrefix(route::listProperties, widgetId) {
+                    WidgetPropertyType.ENUMS_SET ->
                         drawEnumsSetInput(p, v?.asList?.mapNotNull { it.toLongOrNull() } ?: emptyList())
-                    }
 
                     WidgetPropertyType.WIDGET_COMPONENT -> SELECT("form-control") {
-                        namePrefix(route::properties, widgetId) { name(p.key) }
+                        name(p.key)
                         if(!p.required) OPTION("--")
                         p.widgetComponentClass?.let { clazz ->
                             WidgetComponentService.instance.getWidgetComponents(clazz).forEach { wc ->
@@ -75,13 +73,9 @@ class KcmsPropertiesEditBlock(
                         }
                     }
 
-                    WidgetPropertyType.LIST -> namePrefix(route::listProperties, widgetId) {
-                        drawListInput(p, v?.asList)
-                    }
+                    WidgetPropertyType.LIST -> drawListInput(p, v?.asList)
 
-                    WidgetPropertyType.MAP -> namePrefix(route::enumMapProperties, widgetId) {
-                        drawEnumMapInput(p, v?.asMap)
-                    }
+                    WidgetPropertyType.MAP -> drawEnumMapInput(p, v?.asMap)
                 }
             }
         }

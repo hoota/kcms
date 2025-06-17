@@ -9,8 +9,21 @@ import kcms.common.orNull
 import kcms.files.PageFilesService
 import org.springframework.stereotype.Service
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 import javax.annotation.PostConstruct
 import javax.servlet.http.HttpServletRequest
+
+class PageTreeNode {
+    lateinit var p: Page
+    val children = ArrayList<PageTreeNode>()
+    val myAndChildrenIds: List<Long> by lazy {
+        myAndChildrenIds()
+    }
+
+    private fun myAndChildrenIds(): List<Long> = children.flatMap {
+        it.myAndChildrenIds()
+    }.plus(p.id)
+}
 
 @Service
 class PageTemplatesService(
@@ -24,22 +37,45 @@ class PageTemplatesService(
     private val propertiesByPageCache = CacheBuilder.newBuilder()
         .expireAfterWrite(24, TimeUnit.HOURS)
         .softValues()
-        .build<Long, Map<String, Map<String, PageProperty>>>()
+        .build<Long, Map<String, PageProperty>>()
+
+    private val pagesTree = AtomicReference<Map<Long, PageTreeNode>>(null)
 
     override fun resetCaches() {
         propertiesByPageCache.invalidateAll()
+        pagesTree.set(null)
+    }
+
+    fun getPagesTree(): Map<Long, PageTreeNode> {
+        pagesTree.get()?.let {
+            return it
+        }
+
+        val tree = LinkedHashMap<Long, PageTreeNode>()
+
+        (pagesRepository.findByTemplateIn(
+            templates.filterIsInstance<CouldBeParentPageTemplate>().map { it.id }
+        ) + pagesRepository.findParents()).distinctBy { it.id }.sortedBy { it.id }.forEach { p ->
+            val node = tree.computeIfAbsent(p.id) { PageTreeNode() }
+            node.p = p
+            p.parentId?.let { parentId ->
+                tree.computeIfAbsent(parentId) { PageTreeNode() }.children.add(node)
+            }
+        }
+
+        pagesTree.set(tree)
+
+        return tree
     }
 
     fun getTemplate(id: String): PageTemplate? = templatesMap[id]
 
     fun getPageProperties(pageId: Long) = propertiesByPageCache.get(pageId) {
-        pagePropertyRepository.findByIdPageId(pageId).map { it.copy() }.groupBy { it.id.widgetId }.mapValues {
-            it.value.associateBy { it.id.propertyId }
-        }
+        pagePropertyRepository.findByIdPageId(pageId).map { it.copy() }.associateBy { it.id.propertyId }
     }
 
-    fun getPagesProperties(pageIds: List<Long>): Map<Long, Map<String, Map<String, PageProperty>>> {
-        val result = HashMap<Long, Map<String, Map<String, PageProperty>>>()
+    fun getPagesProperties(pageIds: List<Long>): Map<Long, Map<String, PageProperty>> {
+        val result = HashMap<Long, Map<String, PageProperty>>()
 
         val missedIds = pageIds.filter { pageId ->
             val properties = propertiesByPageCache.getIfPresent(pageId)
@@ -52,9 +88,7 @@ class PageTemplatesService(
                 .map { it.copy() }
                 .groupBy { it.id.pageId }
                 .mapValues { e ->
-                    e.value.groupBy { it.id.widgetId }.mapValues {
-                        it.value.associateBy { it.id.propertyId }
-                    }
+                    e.value.associateBy { it.id.propertyId }
                 }
 
             missedIds.forEach { pageId ->
@@ -71,6 +105,8 @@ class PageTemplatesService(
 
     fun getPage(pageId: Long) = pagesRepository.findById(pageId).orNull()
 
+    fun getPages(pageIds: List<Long>) = pagesRepository.findByIdIn(pageIds)
+
     private fun prepareQuery(query: String?): List<String> {
         return query.nullIfBlank()?.let { query ->
             Regex("(\\p{javaUnicodeIdentifierPart}{2,})").findAll(query).map {
@@ -86,7 +122,7 @@ class PageTemplatesService(
 
     fun searchPages(
         query: String? = null,
-        templateId: String? = null,
+        templateIds: Set<String>? = null,
         checkProperties: Boolean = false,
     ): Sequence<Page> {
         val query = prepareQuery(query)
@@ -99,24 +135,32 @@ class PageTemplatesService(
             pages.filter { p ->
                 val pp = properties?.get(p.id) ?: emptyList()
 
-                (templateId == null || p.template == templateId) && (
+                (templateIds == null || p.template in templateIds) && (
                     matchQuery(p.title, query) || matchQuery(p.slug, query) || (properties != null && pp.any { matchQuery(it.text, query) })
                 )
             }
         }
     }
 
-    fun getChildren(request: HttpServletRequest, pageId: Long, limit: Int? = null): List<PageTemplateRenderContext> {
-        val children = pagesRepository.findByParentId(pageId).filter { it.published }
-        val pageIds = children.map { it.id }
+    fun getChildren(request: HttpServletRequest, pageIds: List<Long>, limit: Int? = null): Sequence<PageTemplateRenderContext> {
+        var children = pagesRepository.findByParentIdIn(pageIds)
+            .asSequence()
+            .filter { it.published }
+
+        if(limit != null) children = children.take(limit)
+
+
+        return children.chunked(100).flatMap { pages ->
+            toPageContext(request, pages)
+        }
+    }
+
+    fun toPageContext(request: HttpServletRequest, pages: List<Page>): List<PageTemplateRenderContext> {
+        val pageIds = pages.map { it.id }.toList()
         val properties = getPagesProperties(pageIds)
         val files = pageFilesService.getPagesFiles(pageIds)
 
-        val limited = limit?.let {
-            children.take(it)
-        } ?: children
-
-        return limited.map { page ->
+        return pages.map { page ->
             PageTemplateRenderContext(
                 request = request,
                 page = page,

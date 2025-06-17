@@ -38,6 +38,7 @@ class KcmsPagesListPage(
                     TH("Slug")
                     TH("Title")
                     TH("Template")
+                    TH("Published")
                 }
             }
             TBODY {
@@ -66,6 +67,10 @@ class KcmsPagesListPage(
                                 href(KcmsTemplateRoute(p.template))
                                 +p.template
                             }
+                        }
+                        TD {
+                            classes(if(p.published) "text-success" else "text-danger")
+                            +if(p.published) "yes" else "no"
                         }
                     }
                 }

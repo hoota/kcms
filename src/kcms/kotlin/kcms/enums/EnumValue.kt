@@ -10,7 +10,7 @@ import javax.persistence.Id
 import javax.persistence.Table
 
 @Entity
-@Table(name = "enum")
+@Table(name = "kcms_enum")
 data class EnumValue(
     @Id
     override val id: Long = 0,

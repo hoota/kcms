@@ -11,16 +11,13 @@ import javax.servlet.http.HttpServletRequest
 data class PageTemplateRenderContext(
     val request: HttpServletRequest,
     val page: Page,
-    val rootProperties: Map<String, Map<String, PageProperty>>?,
-    val pageProperties: Map<String, Map<String, PageProperty>>?,
-    val pageFiles: List<PageFile>,
+    val rootProperties: Map<String, PageProperty>? = null,
+    val pageProperties: Map<String, PageProperty>? = null,
+    val pageFiles: List<PageFile> = emptyList(),
 ) : WidgetRenderContext {
 
-    override fun getProperty(widgetId: String, propertyKey: String): PageProperty? =
-        pageProperties?.get(widgetId)?.get(propertyKey) ?: rootProperties?.get(widgetId)?.get(propertyKey)
-
-    override fun getProperty(widget: Widget, property: WidgetPropertyDescriptor): PageProperty? =
-        pageProperties?.get(widget.id)?.get(property.key) ?: rootProperties?.get(widget.id)?.get(property.key)
+    override fun getProperty(propertyKey: String): PageProperty? =
+        pageProperties?.get(propertyKey) ?: rootProperties?.get(propertyKey)
 
     fun <T> bindParams(params: T): T = try {
         val binder = ServletRequestDataBinder(params)

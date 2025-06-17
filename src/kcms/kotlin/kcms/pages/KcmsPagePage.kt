@@ -8,13 +8,14 @@ import kcms.ui.cms.CommonKcmsPage
 import kcms.ui.cms.MenuModule
 import kcms.widgets.Widget
 import kcms.widgets.WidgetContainer
+import kiss.gossr.GossRendererTypedSelect
 import kiss.gossr.spring.PostRoute
 import org.springframework.stereotype.Component
 
 interface WidgetPropertiesSaveRoute {
-    val properties: MutableMap<String, MutableMap<String, String>>
-    val listProperties: MutableMap<String, MutableMap<String, MutableList<String>>>
-    val enumMapProperties: MutableMap<String, MutableMap<String, String>>
+    val properties: MutableMap<String, String>
+    val listProperties: MutableMap<String, MutableList<String>>
+    val enumMapProperties: MutableMap<String, String>
 }
 
 data class KcmsPageSaveRoute(
@@ -24,9 +25,9 @@ data class KcmsPageSaveRoute(
     val pageTemplate: String,
     val parentId: Long?,
     val published: Boolean?,
-    override val properties: MutableMap<String, MutableMap<String, String>> = HashMap(),
-    override val listProperties: MutableMap<String, MutableMap<String, MutableList<String>>> = HashMap(),
-    override val enumMapProperties: MutableMap<String, MutableMap<String, String>> = HashMap(),
+    override val properties: MutableMap<String, String> = HashMap(),
+    override val listProperties: MutableMap<String, MutableList<String>> = HashMap(),
+    override val enumMapProperties: MutableMap<String, String> = HashMap(),
     val doSave: String? = null,
     val doSaveAndContinue: String? = null,
     val doRemove: String? = null,
@@ -49,7 +50,7 @@ class KcmsPagePage(
     val parents: List<Page>,
     val p: Page,
     val template: PageTemplate?,
-    val properties: Map<String, Map<String, PageProperty>>,
+    val properties: Map<String, PageProperty>,
     val files: List<PageFile>,
 ) : CommonKcmsPage(
     title = "Page #${p.id} // ${p.title}",
@@ -93,9 +94,7 @@ class KcmsPagePage(
                     SELECT(route::parentId) {
                         classes("form-control")
                         OPTION("-- no parent --")
-                        parents.forEach { p ->
-                            OPTION(p.id, p.title)
-                        }
+                        this.drawParentOptions(null, "")
                     }
                 }
                 DIV("col-12 form-group col-md") {
@@ -147,6 +146,13 @@ class KcmsPagePage(
         }
     }
 
+    private fun GossRendererTypedSelect<Long>.drawParentOptions(parentId: Long?, prefix: String) {
+        parents.filter { it.parentId == parentId }.forEach { p ->
+            OPTION(p.id, "$prefix${p.title}")
+            drawParentOptions(p.id, "$prefix- ")
+        }
+    }
+
     private fun hasPageProperties(w: Widget): Boolean = w.properties.any { !it.globalScope } ||
         (w is WidgetContainer && w.children?.any { hasPageProperties(it) } ?: false)
 
@@ -161,12 +167,12 @@ class KcmsPagePage(
                     DIV("row") {
                         list.filterNot { it.globalScope }.forEach { p ->
                             DIV("col-12 col-md") {
-                                kcmsPropertiesEditBlock.draw(w.id, listOf(p))
+                                kcmsPropertiesEditBlock.draw(listOf(p))
                             }
                         }
                     }
                 } else {
-                    kcmsPropertiesEditBlock.draw(w.id, w.properties.filterNot { it.globalScope })
+                    kcmsPropertiesEditBlock.draw(w.properties.filterNot { it.globalScope })
                 }
 
                 if(w is WidgetContainer) drawPageWidgets(route, w.children)

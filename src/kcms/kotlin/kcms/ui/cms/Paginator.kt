@@ -9,14 +9,36 @@ data class PagedData<T>(
     val currentPage: Int,
     val lastPage: Int,
     val pageSize: Int,
+    val total: Int,
 ) {
     companion object {
         fun <T> of(list: List<T>, page:Int, pageSize: Int): PagedData<T> = PagedData(
             data = list.drop( (page-1) * pageSize).take(pageSize),
             currentPage = page,
             lastPage = (list.size + pageSize - 1) / pageSize,
-            pageSize = pageSize
+            pageSize = pageSize,
+            total = list.size
         )
+
+        fun <T, R> of(sequence: Sequence<T>, page:Int, pageSize: Int, enricher: (List<T>) -> List<R>): PagedData<R> {
+            var total = 0
+            val data = ArrayList<T>()
+            val minIndex = (page - 1)*pageSize
+            val maxIndex = minIndex + pageSize
+
+            sequence.forEachIndexed { index, t ->
+                total ++
+                if(minIndex <= index && index < maxIndex) data.add(t)
+            }
+
+            return PagedData(
+                data = enricher(data),
+                currentPage = page,
+                lastPage = (total + pageSize - 1) / pageSize,
+                pageSize = pageSize,
+                total = total
+            )
+        }
     }
 }
 
