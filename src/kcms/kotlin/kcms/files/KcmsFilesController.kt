@@ -2,14 +2,19 @@ package kcms.files
 
 import kcms.common.CommonService
 import kcms.common.nullIfBlank
+import kcms.common.nullIfEmpty
+import kcms.pages.KcmsPageRoute
+import kcms.pages.KcmsPageTabs
 import kcms.pages.KcmsPagesController
 import kiss.gossr.spring.GetRoute
 import kiss.gossr.spring.MultipartPostRoute
 import kiss.gossr.spring.PostRoute
+import kiss.gossr.spring.PutRoute
 import kiss.gossr.spring.RouteHandler
 import org.springframework.stereotype.Component
 import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.servlet.View
+import javax.servlet.http.HttpServletResponse
 
 @Component
 @RouteHandler
@@ -25,6 +30,26 @@ class KcmsFilesController(
         return KcmsFilesPage(
             pageFileRepository.findByPageId(null)
         )
+    }
+
+    data class KcmsFilesOrderSaveRoute(
+        val orders: MutableMap<Long, Int> = HashMap(),
+    ) : PutRoute
+
+    @RouteHandler
+    fun orderSave(
+        response: HttpServletResponse,
+        route: KcmsFilesOrderSaveRoute
+    ): Any? {
+        transaction {
+            route.orders.forEach { (fileId, order) ->
+                pageFileRepository.findById(fileId).ifPresent {
+                    it.order = order
+                }
+            }
+        }
+
+        return null
     }
 
     data class KcmsFilesUploadRoute(
@@ -44,7 +69,9 @@ class KcmsFilesController(
             pageFilesService.save(route.pageId, url)
         }
 
-        return redirect(route.pageId?.let { KcmsPagesController.KcmsPageRoute(it) } ?: KcmsFilesRoute())
+        return redirectToReferer(
+            route.pageId?.let { KcmsPageRoute(it, tab = KcmsPageTabs.FILES) } ?: KcmsFilesRoute()
+        )
     }
 
 
@@ -58,7 +85,9 @@ class KcmsFilesController(
 
         pageFilesService.removeFile(route.fileId)
 
-        return redirect(route.pageId?.let { KcmsPagesController.KcmsPageRoute(it) } ?: KcmsFilesRoute())
+        return redirectToReferer(
+            route.pageId?.let { KcmsPageRoute(it, tab = KcmsPageTabs.FILES) } ?: KcmsFilesRoute()
+        )
     }
 
 }

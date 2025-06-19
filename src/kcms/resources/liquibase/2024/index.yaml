@@ -110,3 +110,20 @@ databaseChangeLog:
               ALTER TABLE kcms_page_property ADD CONSTRAINT "kcms_page_property_page_id_property_id" PRIMARY KEY (page_id, property_id);
               
 
+  - changeSet:
+      id: kcms_file__order
+      author: andrey
+      changes:
+        - sql:
+            sql: >
+              ALTER TABLE public.kcms_file ADD COLUMN IF NOT EXISTS ord INT NOT NULL DEFAULT 0;
+              UPDATE public.kcms_file SET ord = id;
+
+  - changeSet:
+      id: kcms_page__order
+      author: andrey
+      changes:
+        - sql:
+            sql: >
+              ALTER TABLE public.kcms_page ADD COLUMN IF NOT EXISTS ord INT NOT NULL DEFAULT 0;
+              UPDATE public.kcms_page SET ord = id;

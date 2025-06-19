@@ -44,24 +44,7 @@ class KcmsEnumCategoryPage(
             tr:nth-of-type(2) span.move-value-up { display: none; }          
             tr:last-of-type span.move-value-down { display: none; }          
         """)
-        SCRIPT(code = """
-function moveUp(btn) {
-    const tr = $(btn).closest('tr')[0];
-    const prevTr = tr.previousElementSibling;
-    if (prevTr && prevTr.tagName === 'TR') {
-      tr.parentNode.insertBefore(tr, prevTr);
-    }
-    $('input.order').each(function(index, el) {el.value = index;});
-}            
-function moveDown(btn) {
-    const tr = $(btn).closest('tr')[0];
-    const nextTr = tr.nextElementSibling;
-    if (nextTr && nextTr.tagName === 'TR') {
-      tr.parentNode.insertBefore(tr, nextTr.nextElementSibling);
-    }
-    $('input.order').each(function(index, el) {el.value = index;});
-}            
-        """)
+
         FORM(KcmsEnumCategorySaveRoute(categoryId = category.id)) { route ->
             HIDDEN(route::categoryId)
             TABLE("table") {
@@ -122,13 +105,27 @@ function moveDown(btn) {
                     }
                     SPAN("btn btn-link move-value-up") {
                         style("border: none; padding: 0 0;")
-                        onClick("""moveUp(this)""")
+                        title("Move on top")
+                        onClick("moveRowOnTop(this)")
+                        +"⤒"
+                    }
+                    SPAN("btn btn-link move-value-up") {
+                        style("border: none; padding: 0 0;")
+                        title("Move up")
+                        onClick("moveRowUp(this)")
                         +"↑"
                     }
                     SPAN("btn btn-link move-value-down") {
                         style("border: none; padding: 0 0;")
-                        onClick("""moveDown(this)""")
+                        title("Move down")
+                        onClick("moveRowDown(this)")
                         +"↓"
+                    }
+                    SPAN("btn btn-link move-value-down") {
+                        style("border: none; padding: 0 0;")
+                        title("Move to the bottom")
+                        onClick("moveRowToBottom(this)")
+                        +"⤓"
                     }
                 }
             }

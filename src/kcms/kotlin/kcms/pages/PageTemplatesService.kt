@@ -55,7 +55,7 @@ class PageTemplatesService(
 
         (pagesRepository.findByTemplateIn(
             templates.filterIsInstance<CouldBeParentPageTemplate>().map { it.id }
-        ) + pagesRepository.findParents()).distinctBy { it.id }.sortedBy { it.id }.forEach { p ->
+        ) + pagesRepository.findParents()).distinctBy { it.id }.sortedBy { it.order }.forEach { p ->
             val node = tree.computeIfAbsent(p.id) { PageTreeNode() }
             node.p = p
             p.parentId?.let { parentId ->
@@ -123,6 +123,7 @@ class PageTemplatesService(
     fun searchPages(
         query: String? = null,
         templateIds: Set<String>? = null,
+        parentIds: Set<Long>? = null,
         checkProperties: Boolean = false,
     ): Sequence<Page> {
         val query = prepareQuery(query)
@@ -135,7 +136,7 @@ class PageTemplatesService(
             pages.filter { p ->
                 val pp = properties?.get(p.id) ?: emptyList()
 
-                (templateIds == null || p.template in templateIds) && (
+                (templateIds == null || p.template in templateIds) && (parentIds == null || p.parentId in parentIds) &&(
                     matchQuery(p.title, query) || matchQuery(p.slug, query) || (properties != null && pp.any { matchQuery(it.text, query) })
                 )
             }

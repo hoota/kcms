@@ -4,9 +4,12 @@ import kcms.ui.cms.CommonKcmsPage
 import kcms.ui.cms.MenuModule
 import kcms.ui.cms.PagedData
 import kcms.ui.cms.Paginator
+import kiss.gossr.GossRendererTypedSelect
 
 class KcmsPagesListPage(
     val route: KcmsPagesController.KcmsPagesListRoute,
+    val templates: List<PageTemplate>,
+    val parents: List<Page>,
     val pages: PagedData<Page>
 ) : CommonKcmsPage(
     title = "Pages",
@@ -16,7 +19,7 @@ class KcmsPagesListPage(
     override fun preTitle() {
         A("btn btn-primary") {
             style("float: right;")
-            href(KcmsPagesController.KcmsPageRoute(-1))
+            href(KcmsPageRoute(-1))
             +"New Page"
         }
     }
@@ -46,19 +49,19 @@ class KcmsPagesListPage(
                     TR {
                         TD {
                             A {
-                                href(KcmsPagesController.KcmsPageRoute(p.id))
+                                href(p.slug)
                                 +p.id.toString()
                             }
                         }
                         TD {
                             A {
-                                href(p.slug)
+                                href(KcmsPageRoute(p.id))
                                 +p.slug
                             }
                         }
                         TD {
                             A {
-                                href(KcmsPagesController.KcmsPageRoute(p.id))
+                                href(KcmsPageRoute(p.id))
                                 +p.title
                             }
                         }
@@ -80,7 +83,7 @@ class KcmsPagesListPage(
 
     private fun drawForm() {
         FORM(route) {
-            DIV("input-group pl-0 mb-3 mt-2 col-12 col-md-6") {
+            DIV("input-group pl-0 mb-3 mt-2 col-12 col-md-9") {
                 INPUT("form-control") {
                     placeholder("Search query")
                     nameValueString(route::query)
@@ -94,9 +97,30 @@ class KcmsPagesListPage(
                             +" search in content"
                         }
                     }
+                    SELECT(route::templateId) {
+                        classes("input-group-text")
+                        style("background-color: white;")
+                        OPTION("-- any template --")
+                        templates.forEach { t ->
+                            OPTION(t.id)
+                        }
+                    }
+                    SELECT(route::parentId) {
+                        classes("input-group-text")
+                        style("background-color: white;max-width: 200px")
+                        OPTION("-- any parent --")
+                        this.drawParentOptions(null, "")
+                    }
                     SUBMIT("btn btn-outline-secondary", "Search")
                 }
             }
+        }
+    }
+
+    private fun GossRendererTypedSelect<Long>.drawParentOptions(parentId: Long?, prefix: String) {
+        parents.filter { it.parentId == parentId }.forEach { p ->
+            OPTION(p.id, "$prefix${p.title}")
+            drawParentOptions(p.id, "$prefix- ")
         }
     }
 }

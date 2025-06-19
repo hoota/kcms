@@ -5,6 +5,7 @@ import kcms.common.EntityWithLongId
 import kcms.common.LongIdCrudRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
+import javax.persistence.Column
 import javax.persistence.Entity
 import javax.persistence.Id
 import javax.persistence.Table
@@ -19,6 +20,8 @@ data class Page(
     var template: String,
     var parentId: Long? = null,
     var published: Boolean = false,
+    @Column(name = "ord")
+    var order: Int = id.toInt()
 ) : EntityWithLongId {
 
     @get:JsonIgnore

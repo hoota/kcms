@@ -9,10 +9,131 @@ class KcmsFilesListBlock(
     val files: List<PageFile>
 ) : KcmsGossRenderer() {
     fun draw(title: KcmsGossRenderer.() -> Unit) {
-        val route = KcmsFilesController.KcmsFilesUploadRoute(pageId = pageId)
-
         SCRIPT(src = "https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js")
         LINK(rel = "stylesheet", href = "https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.css")
+
+        drawUploadForm()
+
+        title()
+
+        drawTable()
+
+        SCRIPT(code = """
+            $(document).ready(function() {
+                Fancybox.bind("[data-fancybox]", {  });
+            });                
+        """)
+
+    }
+
+    private fun drawTable() {
+        FORM(
+            KcmsFilesController.KcmsFileRemoveRoute(
+                pageId = pageId,
+                fileId = 0
+            )
+        ) { route ->
+            id("file-remove-form")
+            HIDDEN(route::pageId)
+            HIDDEN(route::fileId)
+        }
+
+        STYLE("""
+            tr:first-of-type span.move-value-up { display: none; }          
+            tr:last-of-type span.move-value-down { display: none; }          
+        """)
+
+        SCRIPT(code = """
+function onRemove(fileId) {
+    if(window.confirm('Are you sure?')) {
+        const form = $('#file-remove-form')[0];
+        form.fileId.value = fileId;
+        form.submit();
+    }
+    return false;
+}
+        """)
+
+        FORM(KcmsFilesController.KcmsFilesOrderSaveRoute()) { route ->
+            ajaxForm()
+            TABLE("table") {
+                TBODY {
+                    files.sortedBy { it.order }.forEach { f ->
+                        TR {
+                            TD {
+                                +f.id.toString()
+                                namePrefix(route::orders) {
+                                    INPUT("order") {
+                                        name(f.id.toString())
+                                        type("hidden")
+                                        value(f.order)
+                                    }
+                                }
+                                DIV {
+                                    SPAN("btn btn-link move-value-up") {
+                                        style("border: none; padding: 0 0;")
+                                        title("Move on top")
+                                        onClick("moveRowOnTop(this, true)")
+                                        +"⤒"
+                                    }
+                                    SPAN("btn btn-link move-value-up") {
+                                        style("border: none; padding: 0 0;")
+                                        title("Move up")
+                                        onClick("moveRowUp(this, true)")
+                                        +"↑"
+                                    }
+                                }
+                                DIV {
+                                    SPAN("btn btn-link move-value-down") {
+                                        style("border: none; padding: 0 0;")
+                                        title("Move to the bottom")
+                                        onClick("moveRowToBottom(this, true)")
+                                        +"⤓"
+                                    }
+                                    SPAN("btn btn-link move-value-down") {
+                                        style("border: none; padding: 0 0;")
+                                        title("Move down")
+                                        onClick("moveRowDown(this, true)")
+                                        +"↓"
+                                    }
+                                }
+                            }
+                            TD {
+                                if(f.symlink != null) {
+                                    classes("font-italic text-secondary")
+                                    title("symlink to ${f.symlink}")
+                                }
+                                +(f.origName.nullIfBlank() ?: f.type.name)
+                            }
+                            TD {
+                                A {
+                                    data("fancybox", "photos")
+                                    target("_blank")
+                                    href(f.url())
+
+                                    if(f.type.image) {
+                                        IMG(src = f.urlWithHeight(100), height = 100)
+                                    } else {
+                                        +f.origName
+                                    }
+                                }
+                            }
+                            TD {
+                                BUTTON("btn btn-sm btn-danger") {
+                                    style("float: right;")
+                                    onClick("onRemove(${f.id})")
+                                    +"remove"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun drawUploadForm() {
+        val route = KcmsFilesController.KcmsFilesUploadRoute(pageId = pageId)
 
         SCRIPT(code ="""
 document.addEventListener('paste', async (event) => {
@@ -75,55 +196,6 @@ document.addEventListener('paste', async (event) => {
                 }
             }
         }
-
-        title()
-
-        TABLE("table") {
-            TBODY {
-                files.forEach { f ->
-                    TR {
-                        TD { +f.id.toString() }
-                        TD {
-                            if(f.symlink != null) {
-                                classes("font-italic text-secondary")
-                                title("symlink to ${f.symlink}")
-                            }
-                            +(f.origName.nullIfBlank() ?: f.type.name)
-                        }
-                        TD {
-                            A {
-                                data("fancybox", "photos")
-                                target("_blank")
-                                href(f.url())
-
-                                if(f.type.image) {
-                                    IMG(src = f.urlWithHeight(100), height = 100)
-                                } else {
-                                    +f.origName
-                                }
-                            }
-                        }
-                        TD {
-                            FORM(KcmsFilesController.KcmsFileRemoveRoute(pageId = f.pageId, fileId = f.id)) { route ->
-                                style("float: right;")
-                                HIDDEN(route::pageId)
-                                HIDDEN(route::fileId)
-
-                                SUBMIT("btn btn-sm btn-danger", "remove") {
-                                    onClick("return window.confirm('Are you sure?')")
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        SCRIPT(code = """
-            $(document).ready(function() {
-                Fancybox.bind("[data-fancybox]", {  });
-            });                
-        """)
 
     }
 }

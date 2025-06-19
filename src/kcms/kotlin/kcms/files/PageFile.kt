@@ -4,6 +4,7 @@ import kcms.common.EntityWithLongId
 import kcms.common.LongIdCrudRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
+import javax.persistence.Column
 import javax.persistence.Entity
 import javax.persistence.EnumType
 import javax.persistence.Enumerated
@@ -21,6 +22,8 @@ data class PageFile(
     val origName: String,
     val size: Long,
     val symlink: Long? = null,
+    @Column(name = "ord")
+    var order: Int = id.toInt()
 ) : EntityWithLongId {
 
     fun url(): String = (symlink ?: id).let { id -> "/files/${id / FILES_PER_FOLDER}/$id.${type.ext.first()}" }

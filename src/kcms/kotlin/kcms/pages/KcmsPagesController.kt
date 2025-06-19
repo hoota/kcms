@@ -7,12 +7,14 @@ import kcms.common.orNull
 import kcms.files.PageFileRepository
 import kcms.ui.cms.PagedData
 import kiss.gossr.spring.GetRoute
+import kiss.gossr.spring.PutRoute
 import kiss.gossr.spring.RouteHandler
 import org.springframework.stereotype.Controller
 import org.springframework.web.servlet.ModelAndView
 import org.springframework.web.servlet.View
 import java.time.LocalDate
 import javax.persistence.EntityManager
+import javax.servlet.http.HttpServletResponse
 
 @Controller
 @RouteHandler
@@ -52,6 +54,8 @@ class KcmsPagesController(
     data class KcmsPagesListRoute(
         val query: String? = null,
         val searchContent: Boolean? = null,
+        val templateId: String? = null,
+        val parentId: Long? = null,
         val page: Int? = null,
     ) : GetRoute
 
@@ -61,18 +65,22 @@ class KcmsPagesController(
     ): View {
         val pages = pageTemplatesService.searchPages(
             query = route.query,
-            templateIds = null,
+            templateIds = route.templateId?.let { setOf(it) },
+            parentIds = route.parentId?.let { setOf(it) },
             checkProperties = route.searchContent == true
         )
 
-        return KcmsPagesListPage(route, PagedData.of(
-            list = pages.toList(),
-            page = route.page ?: 1,
-            pageSize = 20
-        ))
+        return KcmsPagesListPage(
+            route = route,
+            templates = pageTemplatesService.templates,
+            parents = pageTemplatesService.getPagesTree().values.map { it.p },
+            PagedData.of(
+                list = pages.toList(),
+                page = route.page ?: 1,
+                pageSize = 20
+            )
+        )
     }
-
-    data class KcmsPageRoute(val id: Long) : GetRoute
 
     @RouteHandler
     fun page(
@@ -85,14 +93,23 @@ class KcmsPagesController(
             template = ""
         )
 
-        return KcmsPagePage(
-            templates = pageTemplatesService.templates,
-            parents = pageTemplatesService.getPagesTree().values.map { it.p },
-            template = pageTemplatesService.getTemplate(p.template),
-            p = p,
-            properties = pagePropertyRepository.findByIdPageId(p.id).associateBy { it.id.propertyId },
-            files = pageFileRepository.findByPageId(p.id)
-        )
+        return when(route.tab) {
+            KcmsPageTabs.CHILDREN -> KcmsPageChildrenPage(
+                p = p,
+                children = pagesRepository.findByParentId(p.id)
+            )
+            KcmsPageTabs.FILES -> KcmsPageFilesPage(
+                p = p,
+                files = pageFileRepository.findByPageId(p.id)
+            )
+            else -> KcmsPagePage(
+                templates = pageTemplatesService.templates,
+                parents = pageTemplatesService.getPagesTree().values.map { it.p },
+                template = pageTemplatesService.getTemplate(p.template),
+                p = p,
+                properties = pagePropertyRepository.findByIdPageId(p.id).associateBy { it.id.propertyId },
+            )
+        }
     }
 
     fun savePageProperties(em: EntityManager, route: WidgetPropertiesSaveRoute, pageId: Long) {
@@ -169,5 +186,26 @@ class KcmsPagesController(
         return redirect(if(route.doSaveAndContinue != null) KcmsPageRoute(p.id) else KcmsPagesListRoute())
     }
 
+    data class KcmsPagesOrderSaveRoute(
+        val orders: MutableMap<Long, Int> = HashMap(),
+    ) : PutRoute
+
+    @RouteHandler
+    fun orderSave(
+        response: HttpServletResponse,
+        route: KcmsPagesOrderSaveRoute
+    ): Any? {
+        transaction {
+            route.orders.forEach { (fileId, order) ->
+                pagesRepository.findById(fileId).ifPresent {
+                    it.order = order
+                }
+            }
+        }
+
+        Caches.instance.reset()
+
+        return null
+    }
 
 }

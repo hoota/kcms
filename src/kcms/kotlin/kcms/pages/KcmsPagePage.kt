@@ -9,8 +9,15 @@ import kcms.ui.cms.MenuModule
 import kcms.widgets.Widget
 import kcms.widgets.WidgetContainer
 import kiss.gossr.GossRendererTypedSelect
+import kiss.gossr.spring.GetRoute
 import kiss.gossr.spring.PostRoute
 import org.springframework.stereotype.Component
+
+enum class KcmsPageTabs {
+    PROPERTIES, FILES, CHILDREN
+}
+
+data class KcmsPageRoute(val id: Long, val tab: KcmsPageTabs? = null) : GetRoute
 
 interface WidgetPropertiesSaveRoute {
     val properties: MutableMap<String, String>
@@ -51,12 +58,28 @@ class KcmsPagePage(
     val p: Page,
     val template: PageTemplate?,
     val properties: Map<String, PageProperty>,
-    val files: List<PageFile>,
 ) : CommonKcmsPage(
     title = "Page #${p.id} // ${p.title}",
     module = MenuModule.PAGES,
     showTitleAsHeader = false
 ) {
+
+    private fun drawTabs() {
+        DIV("nav nav-tabs mt-1 mb-1") {
+            A("nav-item nav-link active show") {
+                href("#")
+                +"Properties"
+            }
+            A("nav-item nav-link") {
+                href(KcmsPageRoute(id = p.id, tab = KcmsPageTabs.FILES))
+                +"Files"
+            }
+            A("nav-item nav-link") {
+                href(KcmsPageRoute(id = p.id, tab = KcmsPageTabs.CHILDREN))
+                +"Children"
+            }
+        }
+    }
 
     override fun pageBody() {
         H3 {
@@ -67,6 +90,8 @@ class KcmsPagePage(
             }
             +" // ${p.title}"
         }
+
+        if(p.id >= 0) drawTabs()
 
         FORM(KcmsPageSaveRoute(
             pageId = p.id,
@@ -136,13 +161,6 @@ class KcmsPagePage(
             if(p.id > 0) SUBMIT("btn btn-danger", route::doRemove, "Remove Page") {
                 onClick("""return window.confirm('Are you sure?')""")
             }
-        }
-
-        if(p.id >= 0) KcmsFilesListBlock(
-            pageId = p.id,
-            files = files
-        ).draw {
-            H4("mt-4") { +"Files" }
         }
     }
 

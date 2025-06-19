@@ -89,9 +89,8 @@ class KcmsMenuBlock : KcmsGossRenderer() {
                             +"Enums"
                         }
                     }
-                    LI {
+                    if(System.getProperty("dev-mode") == "true") LI {
                         classes("nav-item")
-                        if(module == MenuModule.JOBS) classes("active")
 
                         A {
                             classes("nav-link")
