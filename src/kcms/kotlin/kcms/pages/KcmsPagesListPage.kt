@@ -19,7 +19,7 @@ class KcmsPagesListPage(
     override fun preTitle() {
         A("btn btn-primary") {
             style("float: right;")
-            href(KcmsPageRoute(-1))
+            href(KcmsPageNewRoute())
             +"New Page"
         }
     }

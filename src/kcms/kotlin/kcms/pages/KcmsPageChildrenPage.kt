@@ -60,6 +60,7 @@ class KcmsPageChildrenPage(
                 }
                 TBODY {
                     children.sortedBy { it.order }.forEach { p ->
+                        val tab = if(PageTemplatesService.instance.getTemplate(p) is CouldBeParentPageTemplate) KcmsPageTabs.CHILDREN else KcmsPageTabs.PROPERTIES
                         TR {
                             TD {
                                 A {
@@ -69,13 +70,13 @@ class KcmsPageChildrenPage(
                             }
                             TD {
                                 A {
-                                    href(KcmsPageRoute(p.id, tab = KcmsPageTabs.CHILDREN))
+                                    href(KcmsPageRoute(p.id, tab))
                                     +p.slug
                                 }
                             }
                             TD {
                                 A {
-                                    href(KcmsPageRoute(p.id, tab = KcmsPageTabs.CHILDREN))
+                                    href(KcmsPageRoute(p.id, tab))
                                     +p.title
                                 }
                             }

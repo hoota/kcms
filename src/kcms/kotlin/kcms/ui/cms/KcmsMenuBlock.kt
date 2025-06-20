@@ -39,6 +39,29 @@ class KcmsMenuBlock : KcmsGossRenderer() {
                 id("navbarSupportedContent")
                 EL("UL") {
                     classes("navbar-nav mr-auto")
+
+                    KcmsDashboardComponents.instance.menuOptions.forEach { o ->
+                        val dd = o.dropdown()
+                        LI("nav-item dropdown") {
+                            A {
+                                href("#")
+                                classes("nav-link dropdown-toggle")
+                                attr("data-toggle", "dropdown")
+                                attr("role", "button")
+                                +dd.first
+                            }
+                            DIV("dropdown-menu") {
+                                attr("aria-labelledby", "navbarDropdown")
+                                dd.second.forEach { (label, route) ->
+                                    A("dropdown-item") {
+                                        href(route)
+                                        +label
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     LI {
                         classes("nav-item")
                         if(module == MenuModule.PAGES) classes("active")

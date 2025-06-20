@@ -38,7 +38,7 @@ class KcmsTemplatePage(
     private fun hasSharedProperties(w: Widget): Boolean = w.properties.any { it.globalScope } ||
         (w is WidgetContainer && w.children?.any { hasSharedProperties(it) } ?: false)
 
-    private fun drawSharedWidgets(route: KcmsTemplateSaveRoute, widgets: List<Widget>?) {
+    private fun drawSharedWidgets(route: KcmsTemplateSaveRoute, widgets: List<Widget>?): Unit = namePrefix(route::properties, reset = true) {
         val kcmsPropertiesEditBlock = KcmsPropertiesEditBlock(route, properties)
 
         widgets?.filter { hasSharedProperties(it) }?.forEach { w ->

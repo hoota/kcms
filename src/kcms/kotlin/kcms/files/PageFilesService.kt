@@ -33,7 +33,7 @@ class PageFilesService(
     }
 
     fun getPageFiles(pageId: Long): List<PageFile> = filesByPageCache.get(pageId) {
-        pageFileRepository.findByPageId(pageId).map { it.copy() }
+        pageFileRepository.findByPageId(pageId).sortedBy { it.order }.map { it.copy() }
     }
 
     fun save(pageId: Long?, file: MultipartFile) {
@@ -217,7 +217,10 @@ class PageFilesService(
         }
 
         if(missedIds.isNotEmpty()) {
-            val pageFiles = pageFileRepository.findByPageIdIn(missedIds).map { it.copy() }.groupBy { it.pageId }
+            val pageFiles = pageFileRepository.findByPageIdIn(missedIds)
+                .map { it.copy() }
+                .sortedBy { it.order }
+                .groupBy { it.pageId }
 
             missedIds.forEach { pageId ->
                 val files = pageFiles[pageId] ?: emptyList()

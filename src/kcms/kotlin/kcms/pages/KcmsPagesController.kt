@@ -83,24 +83,44 @@ class KcmsPagesController(
     }
 
     @RouteHandler
+    fun newPage(
+        route: KcmsPageNewRoute
+    ): View {
+        val p = Page(
+            id = -1L,
+            slug = route.slug.nullIfBlank() ?: "",
+            title = "",
+            template = route.templateId.nullIfBlank() ?: "",
+            parentId = route.parentId
+        )
+
+        return KcmsPagePage(
+            templates = pageTemplatesService.templates,
+            parents = pageTemplatesService.getPagesTree().values.map { it.p },
+            template = pageTemplatesService.getTemplate(p.template),
+            p = p,
+            properties = pagePropertyRepository.findByIdPageId(p.id).associateBy { it.id.propertyId },
+        )
+    }
+
+    @RouteHandler
     fun page(
         route: KcmsPageRoute
     ): View {
-        val p = pagesRepository.findById(route.id).orNull() ?: Page(
-            id = -1L,
-            slug = "",
-            title = "",
-            template = ""
-        )
+        val p = pagesRepository.findById(route.id).get()
+        val children = pagesRepository.findByParentId(p.id)
 
-        return when(route.tab) {
-            KcmsPageTabs.CHILDREN -> KcmsPageChildrenPage(
+        return when {
+            route.tab == KcmsPageTabs.CHILDREN && children.isNotEmpty() -> {
+                KcmsPageChildrenPage(
+                    p = p,
+                    children = children
+                )
+            }
+            route.tab == KcmsPageTabs.FILES -> KcmsPageFilesPage(
                 p = p,
-                children = pagesRepository.findByParentId(p.id)
-            )
-            KcmsPageTabs.FILES -> KcmsPageFilesPage(
-                p = p,
-                files = pageFileRepository.findByPageId(p.id)
+                files = pageFileRepository.findByPageId(p.id),
+                noChildren = children.isEmpty()
             )
             else -> KcmsPagePage(
                 templates = pageTemplatesService.templates,
@@ -108,6 +128,7 @@ class KcmsPagesController(
                 template = pageTemplatesService.getTemplate(p.template),
                 p = p,
                 properties = pagePropertyRepository.findByIdPageId(p.id).associateBy { it.id.propertyId },
+                noChildren = children.isEmpty()
             )
         }
     }

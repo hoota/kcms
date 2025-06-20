@@ -1,13 +1,29 @@
 package kcms.pages
 
 import kcms.files.KcmsFilesListBlock
+import kcms.files.KcmsImageScale
+import kcms.files.KcmsImageScaleType
 import kcms.files.PageFile
 import kcms.ui.cms.CommonKcmsPage
 import kcms.ui.cms.MenuModule
+import org.springframework.stereotype.Component
+
+@Component
+data class KcmsImageScaleH100(
+    override val size: Int = 100,
+    override val type: KcmsImageScaleType = KcmsImageScaleType.HEIGHT
+) : KcmsImageScale
+
+@Component
+data class KcmsImageScaleW100(
+    override val size: Int = 100,
+    override val type: KcmsImageScaleType = KcmsImageScaleType.WIDTH
+) : KcmsImageScale
 
 class KcmsPageFilesPage(
     val p: Page,
     val files: List<PageFile>,
+    val noChildren: Boolean
 ) : CommonKcmsPage(
     title = "Page #${p.id} // ${p.title}",
     module = MenuModule.PAGES,
@@ -24,7 +40,7 @@ class KcmsPageFilesPage(
                 href("#")
                 +"Files"
             }
-            A("nav-item nav-link") {
+            if(!noChildren) A("nav-item nav-link") {
                 href(KcmsPageRoute(id = p.id, tab = KcmsPageTabs.CHILDREN))
                 +"Children"
             }

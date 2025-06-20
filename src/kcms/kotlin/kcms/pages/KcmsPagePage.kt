@@ -19,6 +19,12 @@ enum class KcmsPageTabs {
 
 data class KcmsPageRoute(val id: Long, val tab: KcmsPageTabs? = null) : GetRoute
 
+data class KcmsPageNewRoute(
+    val templateId: String? = null,
+    val parentId: Long? = null,
+    val slug: String? = null,
+) : GetRoute
+
 interface WidgetPropertiesSaveRoute {
     val properties: MutableMap<String, String>
     val listProperties: MutableMap<String, MutableList<String>>
@@ -40,26 +46,15 @@ data class KcmsPageSaveRoute(
     val doRemove: String? = null,
 ) : PostRoute, WidgetPropertiesSaveRoute
 
-@Component
-data class KcmsImageScaleH100(
-    override val size: Int = 100,
-    override val type: KcmsImageScaleType = KcmsImageScaleType.HEIGHT
-) : KcmsImageScale
-
-@Component
-data class KcmsImageScaleW100(
-    override val size: Int = 100,
-    override val type: KcmsImageScaleType = KcmsImageScaleType.WIDTH
-) : KcmsImageScale
-
 class KcmsPagePage(
     val templates: List<PageTemplate>,
     val parents: List<Page>,
     val p: Page,
     val template: PageTemplate?,
     val properties: Map<String, PageProperty>,
+    val noChildren: Boolean = true
 ) : CommonKcmsPage(
-    title = "Page #${p.id} // ${p.title}",
+    title = if(p.id >= 0) "Page #${p.id} // ${p.title}" else "New Page",
     module = MenuModule.PAGES,
     showTitleAsHeader = false
 ) {
@@ -74,7 +69,7 @@ class KcmsPagePage(
                 href(KcmsPageRoute(id = p.id, tab = KcmsPageTabs.FILES))
                 +"Files"
             }
-            A("nav-item nav-link") {
+            if(!noChildren) A("nav-item nav-link") {
                 href(KcmsPageRoute(id = p.id, tab = KcmsPageTabs.CHILDREN))
                 +"Children"
             }
@@ -82,16 +77,24 @@ class KcmsPagePage(
     }
 
     override fun pageBody() {
-        H3 {
-            classes("mt-3 page-title")
-            A {
-                href(p.slug)
-                +"Page #${p.id}"
-            }
-            +" // ${p.title}"
-        }
 
-        if(p.id >= 0) drawTabs()
+        if(p.id >= 0) {
+            H3 {
+                classes("mt-3 page-title")
+                A {
+                    href(p.slug)
+                    +"Page #${p.id}"
+                }
+                +" // ${p.title}"
+            }
+
+            drawTabs()
+        } else {
+            H3 {
+                classes("mt-3 page-title")
+                +"New Page"
+            }
+        }
 
         FORM(KcmsPageSaveRoute(
             pageId = p.id,
@@ -152,10 +155,9 @@ class KcmsPagePage(
                 }
             }
 
-            H4 { +"Page Widgets" }
             drawPageWidgets(route, template?.widgets)
 
-            SUBMIT("btn btn-primary", route::doSave, "Save")
+            if(p.id >= 0) SUBMIT("btn btn-primary", route::doSave, "Save")
             SUBMIT("btn btn-success", route::doSaveAndContinue, "Save and Continue")
 
             if(p.id > 0) SUBMIT("btn btn-danger", route::doRemove, "Remove Page") {
@@ -174,7 +176,7 @@ class KcmsPagePage(
     private fun hasPageProperties(w: Widget): Boolean = w.properties.any { !it.globalScope } ||
         (w is WidgetContainer && w.children?.any { hasPageProperties(it) } ?: false)
 
-    private fun drawPageWidgets(route: KcmsPageSaveRoute, widgets: List<Widget>?) {
+    private fun drawPageWidgets(route: KcmsPageSaveRoute, widgets: List<Widget>?): Unit = namePrefix(route::properties, reset = true) {
         val kcmsPropertiesEditBlock = KcmsPropertiesEditBlock(route, properties)
 
         widgets?.filter { hasPageProperties(it) }?.forEach { w ->

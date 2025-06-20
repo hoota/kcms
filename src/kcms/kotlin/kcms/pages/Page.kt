@@ -38,7 +38,7 @@ data class Page(
 interface PagesRepository : LongIdCrudRepository<Page> {
     fun findBySlug(slug: String): Page?
     fun findByParentId(parentId: Long): List<Page>
-    fun findByParentIdIn(parentIds: Iterable<Long>): List<Page>
+    fun findByParentIdInOrderByOrder(parentIds: Iterable<Long>): List<Page>
     fun findByTemplateIn(templates: Iterable<String>): List<Page>
 
     @Query("""

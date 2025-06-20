@@ -16,6 +16,7 @@ import kiss.gossr.spring.GetRoute
 import kiss.gossr.spring.GossSpringRenderer
 import kiss.gossr.spring.GossrSpringView
 import kiss.gossr.spring.RoutesHelper
+import org.springframework.core.convert.converter.Converter
 import org.springframework.core.io.ClassPathResource
 import org.springframework.security.web.csrf.CsrfToken
 import org.springframework.stereotype.Component
@@ -23,6 +24,8 @@ import org.springframework.util.DigestUtils
 import org.springframework.web.multipart.MultipartFile
 import java.math.BigDecimal
 import java.math.BigInteger
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import java.util.concurrent.ConcurrentHashMap
 import javax.servlet.http.Cookie
 
@@ -69,9 +72,6 @@ open class KcmsGossRenderer : GossSpringRenderer() {
     fun openModalOnClick(route: GetRoute) {
         onClick("return openCommonModal(event, ${toJson(RoutesHelper.getRouteUrl(route))})")
     }
-
-    fun href(route: GetRoute, baseUrl: String? = null, hash: String? = null) =
-        attr("href", (baseUrl ?: "") + RoutesHelper.getRouteUrl(route) + (hash?.let { "#$it" } ?: ""))
 
     fun showErrorMessage(errorMessage: String?) {
         errorMessage.nullIfBlank()?.let {
@@ -142,6 +142,17 @@ class MultipartFileSerializer : StdSerializer<MultipartFile>(MultipartFile::clas
                 "originalFilename" to value.originalFilename,
                 "size" to value.size,
             ))
+        }
+    }
+}
+
+@Component
+class LocalDateRequestParamConverter : Converter<String, LocalDate> {
+    val iso: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+
+    override fun convert(source: String): LocalDate? {
+        return source.nullIfBlank()?.let {
+            LocalDate.parse(it, iso)
         }
     }
 }

@@ -69,6 +69,7 @@ class PageTemplatesService(
     }
 
     fun getTemplate(id: String): PageTemplate? = templatesMap[id]
+    fun getTemplate(p: Page): PageTemplate? = templatesMap[p.template]
 
     fun getPageProperties(pageId: Long) = propertiesByPageCache.get(pageId) {
         pagePropertyRepository.findByIdPageId(pageId).map { it.copy() }.associateBy { it.id.propertyId }
@@ -143,8 +144,8 @@ class PageTemplatesService(
         }
     }
 
-    fun getChildren(request: HttpServletRequest, pageIds: List<Long>, limit: Int? = null): Sequence<PageTemplateRenderContext> {
-        var children = pagesRepository.findByParentIdIn(pageIds)
+    fun getChildren(request: HttpServletRequest, parentIds: List<Long>, limit: Int? = null): Sequence<PageTemplateRenderContext> {
+        var children = pagesRepository.findByParentIdInOrderByOrder(parentIds)
             .asSequence()
             .filter { it.published }
 
