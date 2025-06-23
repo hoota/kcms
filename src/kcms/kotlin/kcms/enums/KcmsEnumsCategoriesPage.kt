@@ -2,19 +2,20 @@ package kcms.enums
 
 import kcms.ui.cms.CommonKcmsPage
 import kcms.ui.cms.MenuModule
+import kcms.ui.cms.i18n.KcmsInternationalization
 import kiss.gossr.spring.GetRoute
 
 class KcmsEnumsCategoriesRoute : GetRoute
 
 class KcmsEnumsCategoriesPage : CommonKcmsPage(
-    title = "Enum Categories",
+    title = KcmsInternationalization.instance.enumCategories,
     module = MenuModule.ENUMS
 ) {
     override fun pageBody() {
         TABLE("table") {
             THEAD {
                 TR {
-                    TH("Category")
+                    TH(i18n.category)
                 }
             }
             TBODY {

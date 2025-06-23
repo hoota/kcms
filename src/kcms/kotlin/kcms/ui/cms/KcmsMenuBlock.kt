@@ -33,7 +33,7 @@ class KcmsMenuBlock : KcmsGossRenderer() {
             A {
                 classes("navbar-brand p-0")
                 href(KcmsController.KcmsRoute())
-                IMG("/kcms/logo.png", height = 40)
+                IMG(getResourceUrlWithVersion("/kcms/logo.png"), height = 40)
             }
             DIV("collapse navbar-collapse") {
                 id("navbarSupportedContent")
@@ -69,7 +69,7 @@ class KcmsMenuBlock : KcmsGossRenderer() {
                         A {
                             classes("nav-link")
                             href(KcmsPagesController.KcmsPagesListRoute())
-                            +"Pages"
+                            +i18n.pages
                         }
                     }
                     LI {
@@ -79,7 +79,7 @@ class KcmsMenuBlock : KcmsGossRenderer() {
                         A {
                             classes("nav-link")
                             href(KcmsPagesController.KcmsTemplatesListRoute())
-                            +"Templates"
+                            +i18n.templates
                         }
                     }
                     LI {
@@ -89,7 +89,7 @@ class KcmsMenuBlock : KcmsGossRenderer() {
                         A {
                             classes("nav-link")
                             href(KcmsFilesController.KcmsFilesRoute())
-                            +"Files"
+                            +i18n.files
                         }
                     }
                     if(JobsRunnerService.instance.jobs.isNotEmpty()) LI {
@@ -99,7 +99,7 @@ class KcmsMenuBlock : KcmsGossRenderer() {
                         A {
                             classes("nav-link")
                             href(KcmsJobsController.AdminJobsListRoute())
-                            +"Jobs"
+                            +i18n.backgroundJobs
                         }
                     }
                     if(EnumValueService.instance.categories.isNotEmpty()) LI {
@@ -109,7 +109,7 @@ class KcmsMenuBlock : KcmsGossRenderer() {
                         A {
                             classes("nav-link")
                             href(KcmsEnumsCategoriesRoute())
-                            +"Enums"
+                            +i18n.enums
                         }
                     }
                     if(System.getProperty("dev-mode") == "true") LI {

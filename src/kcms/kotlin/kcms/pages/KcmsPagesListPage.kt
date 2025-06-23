@@ -4,6 +4,7 @@ import kcms.ui.cms.CommonKcmsPage
 import kcms.ui.cms.MenuModule
 import kcms.ui.cms.PagedData
 import kcms.ui.cms.Paginator
+import kcms.ui.cms.i18n.KcmsInternationalization
 import kiss.gossr.GossRendererTypedSelect
 
 class KcmsPagesListPage(
@@ -12,7 +13,7 @@ class KcmsPagesListPage(
     val parents: List<Page>,
     val pages: PagedData<Page>
 ) : CommonKcmsPage(
-    title = "Pages",
+    title = KcmsInternationalization.instance.pages,
     module = MenuModule.PAGES
 ) {
 
@@ -20,7 +21,7 @@ class KcmsPagesListPage(
         A("btn btn-primary") {
             style("float: right;")
             href(KcmsPageNewRoute())
-            +"New Page"
+            +i18n.newPage
         }
     }
 
@@ -39,9 +40,9 @@ class KcmsPagesListPage(
                 TR {
                     TH("ID")
                     TH("Slug")
-                    TH("Title")
-                    TH("Template")
-                    TH("Published")
+                    TH(i18n.title)
+                    TH(i18n.template)
+                    TH(i18n.published)
                 }
             }
             TBODY {
@@ -67,13 +68,13 @@ class KcmsPagesListPage(
                         }
                         TD {
                             A {
-                                href(KcmsTemplateRoute(p.template))
-                                +p.template
+                                href(KcmsTemplateRoute(p.templateId))
+                                +p.templateId
                             }
                         }
                         TD {
                             classes(if(p.published) "text-success" else "text-danger")
-                            +if(p.published) "yes" else "no"
+                            +if(p.published) i18n.yes else i18n.no
                         }
                     }
                 }
@@ -85,7 +86,7 @@ class KcmsPagesListPage(
         FORM(route) {
             DIV("input-group pl-0 mb-3 mt-2 col-12 col-md-9") {
                 INPUT("form-control") {
-                    placeholder("Search query")
+                    placeholder(i18n.searchQuery)
                     nameValueString(route::query)
                 }
                 DIV("input-group-append") {
@@ -94,24 +95,24 @@ class KcmsPagesListPage(
                         LABEL("ml-1 mb-0") {
                             forAttr(chId)
                             style("margin-top: -2px;")
-                            +" search in content"
+                            +i18n.searchInContent
                         }
                     }
                     SELECT(route::templateId) {
                         classes("input-group-text")
                         style("background-color: white;")
-                        OPTION("-- any template --")
+                        OPTION("-- ${i18n.anyTemplate} --")
                         templates.forEach { t ->
-                            OPTION(t.id)
+                            OPTION(t.templateId)
                         }
                     }
                     SELECT(route::parentId) {
                         classes("input-group-text")
                         style("background-color: white;max-width: 200px")
-                        OPTION("-- any parent --")
+                        OPTION("-- ${i18n.anyParent} --")
                         this.drawParentOptions(null, "")
                     }
-                    SUBMIT("btn btn-outline-secondary", "Search")
+                    SUBMIT("btn btn-outline-secondary", i18n.search)
                 }
             }
         }

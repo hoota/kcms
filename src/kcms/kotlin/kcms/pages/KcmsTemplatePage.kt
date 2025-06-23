@@ -2,8 +2,7 @@ package kcms.pages
 
 import kcms.ui.cms.CommonKcmsPage
 import kcms.ui.cms.MenuModule
-import kcms.widgets.Widget
-import kcms.widgets.WidgetContainer
+import kcms.ui.cms.i18n.KcmsInternationalization
 import kiss.gossr.spring.GetRoute
 import kiss.gossr.spring.PostRoute
 
@@ -23,31 +22,17 @@ class KcmsTemplatePage(
     val template: PageTemplate,
     val properties: Map<String, PageProperty>,
 ) : CommonKcmsPage(
-    title = "Page Template - ${template.id}",
+    title = "${KcmsInternationalization.instance.template} // ${template.templateId}",
     module = MenuModule.TEMPLATES
 ) {
 
     override fun pageBody() {
-        FORM(KcmsTemplateSaveRoute(templateId = template.id)) { route ->
+        FORM(KcmsTemplateSaveRoute(templateId = template.templateId)) { route ->
             HIDDEN(route::templateId)
-            drawSharedWidgets(route, template.widgets)
-            SUBMIT("btn btn-primary", route::doSave, "Save")
-        }
-    }
 
-    private fun hasSharedProperties(w: Widget): Boolean = w.properties.any { it.globalScope } ||
-        (w is WidgetContainer && w.children?.any { hasSharedProperties(it) } ?: false)
+            KcmsPropertiesEditBlock(route, properties).drawWidgets(template.globalWidgets)
 
-    private fun drawSharedWidgets(route: KcmsTemplateSaveRoute, widgets: List<Widget>?): Unit = namePrefix(route::properties, reset = true) {
-        val kcmsPropertiesEditBlock = KcmsPropertiesEditBlock(route, properties)
-
-        widgets?.filter { hasSharedProperties(it) }?.forEach { w ->
-            B { +w.title }
-            DIV("ml-4") {
-                kcmsPropertiesEditBlock.draw(w.properties.filter { it.globalScope })
-
-                if(w is WidgetContainer) drawSharedWidgets(route, w.children)
-            }
+            SUBMIT("btn btn-primary", route::doSave, i18n.save)
         }
     }
 }

@@ -16,7 +16,7 @@ abstract class CommonKcmsPage(
     abstract fun pageBody()
 
     fun pageBodyWrapper() {
-        DIV {
+        DIV("mb-4") {
             id(this.javaClass.simpleName)
             pageBody()
         }
@@ -167,7 +167,7 @@ $(document).ready($(function() {
                             attr("role", "button")
                             classes("nav-link dropdown-toggle")
                             href("#")
-                            +"More..."
+                            +i18n.more
                         }
                         DIV("dropdown-menu") {
                             tabs.filter { it.selected || it.show() }.forEachIndexed { index, t ->

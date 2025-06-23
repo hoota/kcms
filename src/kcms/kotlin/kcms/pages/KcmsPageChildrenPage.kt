@@ -2,12 +2,13 @@ package kcms.pages
 
 import kcms.ui.cms.CommonKcmsPage
 import kcms.ui.cms.MenuModule
+import kcms.ui.cms.i18n.KcmsInternationalization
 
 class KcmsPageChildrenPage(
     val p: Page,
     val children: List<Page>,
 ) : CommonKcmsPage(
-    title = "Page #${p.id} // ${p.title}",
+    title = "${KcmsInternationalization.instance.page} #${p.id} // ${p.title}",
     module = MenuModule.PAGES,
     showTitleAsHeader = false
 ) {
@@ -15,15 +16,15 @@ class KcmsPageChildrenPage(
         DIV("nav nav-tabs mt-1 mb-1") {
             A("nav-item nav-link") {
                 href(KcmsPageRoute(id = p.id, tab = KcmsPageTabs.PROPERTIES))
-                +"Properties"
+                +i18n.properties
             }
             A("nav-item nav-link") {
                 href(KcmsPageRoute(id = p.id, tab = KcmsPageTabs.FILES))
-                +"Files"
+                +i18n.files
             }
             A("nav-item nav-link active show") {
                 href("#")
-                +"Children"
+                +i18n.children
             }
         }
     }
@@ -33,7 +34,7 @@ class KcmsPageChildrenPage(
             classes("mt-3 page-title")
             A {
                 href(p.slug)
-                +"Page #${p.id}"
+                +"${i18n.page} #${p.id}"
             }
             +" // ${p.title}"
         }
@@ -52,9 +53,9 @@ class KcmsPageChildrenPage(
                     TR {
                         TH("ID")
                         TH("Slug")
-                        TH("Title")
-                        TH("Template")
-                        TH("Published")
+                        TH(i18n.title)
+                        TH(i18n.template)
+                        TH(i18n.published)
                         TH("")
                     }
                 }
@@ -81,11 +82,11 @@ class KcmsPageChildrenPage(
                                 }
                             }
                             TD {
-                                +p.template
+                                +p.templateId
                             }
                             TD {
                                 classes(if(p.published) "text-success" else "text-danger")
-                                +if(p.published) "yes" else "no"
+                                +if(p.published) i18n.yes else i18n.no
                             }
                             TD {
                                 namePrefix(route::orders) {
@@ -97,25 +98,25 @@ class KcmsPageChildrenPage(
                                 }
                                 SPAN("btn btn-link move-value-up") {
                                     style("border: none; padding: 0 0;")
-                                    title("Move on top")
+                                    title(i18n.moveToTop)
                                     onClick("moveRowOnTop(this, true)")
                                     +"⤒"
                                 }
                                 SPAN("btn btn-link move-value-up") {
                                     style("border: none; padding: 0 0;")
-                                    title("Move up")
+                                    title(i18n.moveUp)
                                     onClick("moveRowUp(this, true)")
                                     +"↑"
                                 }
                                 SPAN("btn btn-link move-value-down") {
                                     style("border: none; padding: 0 0;")
-                                    title("Move down")
+                                    title(i18n.moveDown)
                                     onClick("moveRowDown(this, true)")
                                     +"↓"
                                 }
                                 SPAN("btn btn-link move-value-down") {
                                     style("border: none; padding: 0 0;")
-                                    title("Move to the bottom")
+                                    title(i18n.moveToTheBottom)
                                     onClick("moveRowToBottom(this, true)")
                                     +"⤓"
                                 }

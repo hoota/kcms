@@ -17,7 +17,8 @@ data class Page(
     override val id: Long = 0,
     var slug: String,
     var title: String,
-    var template: String,
+    @Column(name = "template")
+    var templateId: String,
     var parentId: Long? = null,
     var published: Boolean = false,
     @Column(name = "ord")
@@ -29,6 +30,9 @@ data class Page(
         PageTemplatesService.instance.getPage(it)
     }
 
+    @get:JsonIgnore
+    val template: PageTemplate? get() = PageTemplatesService.instance.getTemplate(templateId)
+
     companion object {
         const val GENERATOR_NAME = "page_id_seq"
     }
@@ -39,7 +43,7 @@ interface PagesRepository : LongIdCrudRepository<Page> {
     fun findBySlug(slug: String): Page?
     fun findByParentId(parentId: Long): List<Page>
     fun findByParentIdInOrderByOrder(parentIds: Iterable<Long>): List<Page>
-    fun findByTemplateIn(templates: Iterable<String>): List<Page>
+    fun findByTemplateIdIn(templates: Iterable<String>): List<Page>
 
     @Query("""
         SELECT p.* FROM kcms_page p WHERE p.id IN (

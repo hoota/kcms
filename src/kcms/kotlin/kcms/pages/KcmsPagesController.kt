@@ -6,6 +6,7 @@ import kcms.common.nullIfBlank
 import kcms.common.orNull
 import kcms.files.PageFileRepository
 import kcms.ui.cms.PagedData
+import kcms.widgets.WidgetRenderContext
 import kiss.gossr.spring.GetRoute
 import kiss.gossr.spring.PutRoute
 import kiss.gossr.spring.RouteHandler
@@ -13,7 +14,6 @@ import org.springframework.stereotype.Controller
 import org.springframework.web.servlet.ModelAndView
 import org.springframework.web.servlet.View
 import java.time.LocalDate
-import javax.persistence.EntityManager
 import javax.servlet.http.HttpServletResponse
 
 @Controller
@@ -23,7 +23,9 @@ class KcmsPagesController(
     val pagePropertyRepository: PagePropertyRepository,
     val pageTemplatesService: PageTemplatesService,
     val pageFileRepository: PageFileRepository,
+    val slugGenerators: SlugGenerators
 ) : CommonService() {
+
     class KcmsTemplatesListRoute : GetRoute
 
     @RouteHandler
@@ -43,7 +45,9 @@ class KcmsPagesController(
     fun templateSave(route: KcmsTemplateSaveRoute): ModelAndView {
         if(route.doSave != null) {
             transaction { em ->
-                savePageProperties(em, route, 0L)
+                getPageProperties(route, 0L).forEach {
+                    em.merge(it)
+                }
             }
             Caches.instance.reset()
         }
@@ -90,14 +94,14 @@ class KcmsPagesController(
             id = -1L,
             slug = route.slug.nullIfBlank() ?: "",
             title = "",
-            template = route.templateId.nullIfBlank() ?: "",
+            templateId = route.templateId.nullIfBlank() ?: "",
             parentId = route.parentId
         )
 
         return KcmsPagePage(
             templates = pageTemplatesService.templates,
             parents = pageTemplatesService.getPagesTree().values.map { it.p },
-            template = pageTemplatesService.getTemplate(p.template),
+            template = pageTemplatesService.getTemplate(p.templateId),
             p = p,
             properties = pagePropertyRepository.findByIdPageId(p.id).associateBy { it.id.propertyId },
         )
@@ -125,7 +129,7 @@ class KcmsPagesController(
             else -> KcmsPagePage(
                 templates = pageTemplatesService.templates,
                 parents = pageTemplatesService.getPagesTree().values.map { it.p },
-                template = pageTemplatesService.getTemplate(p.template),
+                template = pageTemplatesService.getTemplate(p.templateId),
                 p = p,
                 properties = pagePropertyRepository.findByIdPageId(p.id).associateBy { it.id.propertyId },
                 noChildren = children.isEmpty()
@@ -133,9 +137,9 @@ class KcmsPagesController(
         }
     }
 
-    fun savePageProperties(em: EntityManager, route: WidgetPropertiesSaveRoute, pageId: Long) {
-        route.properties.forEach { (propertyId, value) ->
-            em.merge(PageProperty(
+    fun getPageProperties(route: WidgetPropertiesSaveRoute, pageId: Long): List<PageProperty> {
+        return route.properties.map { (propertyId, value) ->
+            PageProperty(
                 id = PagePropertyId(
                     pageId = pageId,
                     propertyId = propertyId,
@@ -143,21 +147,19 @@ class KcmsPagesController(
                 text = value,
                 number = value.toBigDecimalOrNull(),
                 date = try { LocalDate.parse(value) }catch(e: Exception) { null }
-            ))
-        }
-        route.listProperties.forEach { (propertyId, values) ->
-            em.merge(PageProperty(
+            )
+        } + route.listProperties.map { (propertyId, values) ->
+            PageProperty(
                 id = PagePropertyId(
                     pageId = pageId,
                     propertyId = propertyId,
                 ),
-            ).also { it.asList = values.mapNotNull { it.nullIfBlank() } })
-        }
-        route.enumMapProperties.map { p ->
+            ).also { it.asList = values.mapNotNull { it.nullIfBlank() } }
+        } + route.enumMapProperties.map { p ->
             p.key.split("@", limit = 2).let {
                 Triple(it[0], it[1], p.value)
             }
-        }.groupBy { it.first }.forEach { (propertyId, map) ->
+        }.groupBy { it.first }.map { (propertyId, map) ->
             val map = map.map {
                 it.second.toLongOrNull() to it.third.nullIfBlank()
             }.filter {
@@ -166,12 +168,12 @@ class KcmsPagesController(
                 it.first!! to it.second!!
             }
 
-            em.merge(PageProperty(
+            PageProperty(
                 id = PagePropertyId(
                     pageId = pageId,
                     propertyId = propertyId,
                 ),
-            ).also { it.asMap = map } )
+            ).also { it.asMap = map }
         }
     }
 
@@ -181,14 +183,18 @@ class KcmsPagesController(
             id = pagesRepository.nextPageId(),
             slug = "",
             title = "",
-            template = ""
+            templateId = ""
         )
 
+        val properties = getPageProperties(route, p.id).associateBy { it.id.propertyId }
+
         p.title = route.pageTitle
-        p.slug = route.pageSlug
-        p.template = route.pageTemplate
+        p.templateId = route.pageTemplate
         p.parentId = route.parentId
         p.published = route.published == true
+        p.slug = slugGenerators.generators[p.templateId]?.generateSlug(p, object : WidgetRenderContext {
+            override fun getProperty(propertyKey: String): PageProperty? = properties[propertyKey]
+        }) ?: route.pageSlug
 
         if(route.doRemove != null) {
             transaction {
@@ -199,7 +205,9 @@ class KcmsPagesController(
         if(route.doSave != null || route.doSaveAndContinue != null) {
             transaction { em ->
                 pagesRepository.save(p)
-                savePageProperties(em, route, p.id)
+                properties.values.forEach {
+                    em.merge(it)
+                }
             }
             Caches.instance.reset()
         }

@@ -32,7 +32,7 @@ class PageTemplatesService(
     val pagePropertyRepository: PagePropertyRepository,
     val pageFilesService: PageFilesService,
 ) : CommonService(), Caching {
-    private val templatesMap = templates.associateBy { it.id }
+    private val templatesMap = templates.associateBy { it.templateId }
 
     private val propertiesByPageCache = CacheBuilder.newBuilder()
         .expireAfterWrite(24, TimeUnit.HOURS)
@@ -53,8 +53,8 @@ class PageTemplatesService(
 
         val tree = LinkedHashMap<Long, PageTreeNode>()
 
-        (pagesRepository.findByTemplateIn(
-            templates.filterIsInstance<CouldBeParentPageTemplate>().map { it.id }
+        (pagesRepository.findByTemplateIdIn(
+            templates.filterIsInstance<CouldBeParentPageTemplate>().map { it.templateId }
         ) + pagesRepository.findParents()).distinctBy { it.id }.sortedBy { it.order }.forEach { p ->
             val node = tree.computeIfAbsent(p.id) { PageTreeNode() }
             node.p = p
@@ -69,7 +69,7 @@ class PageTemplatesService(
     }
 
     fun getTemplate(id: String): PageTemplate? = templatesMap[id]
-    fun getTemplate(p: Page): PageTemplate? = templatesMap[p.template]
+    fun getTemplate(p: Page): PageTemplate? = templatesMap[p.templateId]
 
     fun getPageProperties(pageId: Long) = propertiesByPageCache.get(pageId) {
         pagePropertyRepository.findByIdPageId(pageId).map { it.copy() }.associateBy { it.id.propertyId }
@@ -137,7 +137,7 @@ class PageTemplatesService(
             pages.filter { p ->
                 val pp = properties?.get(p.id) ?: emptyList()
 
-                (templateIds == null || p.template in templateIds) && (parentIds == null || p.parentId in parentIds) &&(
+                (templateIds == null || p.templateId in templateIds) && (parentIds == null || p.parentId in parentIds) &&(
                     matchQuery(p.title, query) || matchQuery(p.slug, query) || (properties != null && pp.any { matchQuery(it.text, query) })
                 )
             }

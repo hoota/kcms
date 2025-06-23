@@ -1,17 +1,11 @@
 package kcms.pages
 
-import kcms.files.KcmsFilesListBlock
-import kcms.files.KcmsImageScale
-import kcms.files.KcmsImageScaleType
-import kcms.files.PageFile
 import kcms.ui.cms.CommonKcmsPage
 import kcms.ui.cms.MenuModule
-import kcms.widgets.Widget
-import kcms.widgets.WidgetContainer
+import kcms.ui.cms.i18n.KcmsInternationalization
 import kiss.gossr.GossRendererTypedSelect
 import kiss.gossr.spring.GetRoute
 import kiss.gossr.spring.PostRoute
-import org.springframework.stereotype.Component
 
 enum class KcmsPageTabs {
     PROPERTIES, FILES, CHILDREN
@@ -54,7 +48,7 @@ class KcmsPagePage(
     val properties: Map<String, PageProperty>,
     val noChildren: Boolean = true
 ) : CommonKcmsPage(
-    title = if(p.id >= 0) "Page #${p.id} // ${p.title}" else "New Page",
+    title = if(p.id >= 0) "${KcmsInternationalization.instance.page} #${p.id} // ${p.title}" else KcmsInternationalization.instance.newPage,
     module = MenuModule.PAGES,
     showTitleAsHeader = false
 ) {
@@ -63,15 +57,15 @@ class KcmsPagePage(
         DIV("nav nav-tabs mt-1 mb-1") {
             A("nav-item nav-link active show") {
                 href("#")
-                +"Properties"
+                +i18n.properties
             }
             A("nav-item nav-link") {
                 href(KcmsPageRoute(id = p.id, tab = KcmsPageTabs.FILES))
-                +"Files"
+                +i18n.files
             }
             if(!noChildren) A("nav-item nav-link") {
                 href(KcmsPageRoute(id = p.id, tab = KcmsPageTabs.CHILDREN))
-                +"Children"
+                +i18n.children
             }
         }
     }
@@ -83,7 +77,7 @@ class KcmsPagePage(
                 classes("mt-3 page-title")
                 A {
                     href(p.slug)
-                    +"Page #${p.id}"
+                    +"${i18n.page} #${p.id}"
                 }
                 +" // ${p.title}"
             }
@@ -92,7 +86,7 @@ class KcmsPagePage(
         } else {
             H3 {
                 classes("mt-3 page-title")
-                +"New Page"
+                +i18n.newPage
             }
         }
 
@@ -100,7 +94,7 @@ class KcmsPagePage(
             pageId = p.id,
             pageSlug = p.slug,
             pageTitle = p.title,
-            pageTemplate = p.template,
+            pageTemplate = p.templateId,
             parentId = p.parentId,
             published = p.published,
         )) { route ->
@@ -109,36 +103,37 @@ class KcmsPagePage(
             DIV("row") {
                 DIV("col-12 form-group col-md") {
                     LABEL {
-                        +"Page Slug (URI)"
+                        +i18n.pageSlug
                     }
                     INPUT("form-control") {
                         nameValueString(route::pageSlug)
+                        readonly(SlugGenerators.instance.generators.containsKey(p.templateId))
                     }
                 }
                 DIV("col-12 form-group col-md") {
                     LABEL {
-                        +"Parent"
+                        +i18n.parent
                     }
                     SELECT(route::parentId) {
                         classes("form-control")
-                        OPTION("-- no parent --")
+                        OPTION("-- ${i18n.noParent} --")
                         this.drawParentOptions(null, "")
                     }
                 }
                 DIV("col-12 form-group col-md") {
                     LABEL {
-                        +"Page Template"
+                        +i18n.template
                     }
                     SELECT(route::pageTemplate) {
                         classes("form-control")
                         templates.forEach { t ->
-                            OPTION(t.id)
+                            OPTION(t.templateId)
                         }
                     }
                 }
                 DIV("col-12 form-group col-md-1") {
                     LABEL {
-                        +"Published"
+                        +i18n.published
                     }
                     DIV("ml-4 mt-1") {
                         CHECKBOX(route::published, withId = true)
@@ -148,20 +143,21 @@ class KcmsPagePage(
 
             DIV("form-group") {
                 LABEL {
-                    +"Page Title"
+                    +i18n.title
                 }
                 INPUT("form-control") {
+                    required()
                     nameValueString(route::pageTitle)
                 }
             }
 
-            drawPageWidgets(route, template?.widgets)
+            KcmsPropertiesEditBlock(route, properties).drawWidgets(template?.widgets)
 
-            if(p.id >= 0) SUBMIT("btn btn-primary", route::doSave, "Save")
-            SUBMIT("btn btn-success", route::doSaveAndContinue, "Save and Continue")
+            if(p.id >= 0) SUBMIT("btn btn-primary", route::doSave, i18n.save)
+            SUBMIT("btn btn-success", route::doSaveAndContinue, i18n.saveAndContinue)
 
-            if(p.id > 0) SUBMIT("btn btn-danger", route::doRemove, "Remove Page") {
-                onClick("""return window.confirm('Are you sure?')""")
+            if(p.id > 0) SUBMIT("btn btn-danger", route::doRemove, i18n.removePage) {
+                onClick("""return window.confirm(${toJson(i18n.areYouSure)})""")
             }
         }
     }
@@ -173,30 +169,4 @@ class KcmsPagePage(
         }
     }
 
-    private fun hasPageProperties(w: Widget): Boolean = w.properties.any { !it.globalScope } ||
-        (w is WidgetContainer && w.children?.any { hasPageProperties(it) } ?: false)
-
-    private fun drawPageWidgets(route: KcmsPageSaveRoute, widgets: List<Widget>?): Unit = namePrefix(route::properties, reset = true) {
-        val kcmsPropertiesEditBlock = KcmsPropertiesEditBlock(route, properties)
-
-        widgets?.filter { hasPageProperties(it) }?.forEach { w ->
-            H5 { +w.title }
-            DIV("ml-4") {
-                val rows = w.propertiesRows
-                if(rows != null) rows.filter { it.any { !it.globalScope } }.forEach { list ->
-                    DIV("row") {
-                        list.filterNot { it.globalScope }.forEach { p ->
-                            DIV("col-12 col-md") {
-                                kcmsPropertiesEditBlock.draw(listOf(p))
-                            }
-                        }
-                    }
-                } else {
-                    kcmsPropertiesEditBlock.draw(w.properties.filterNot { it.globalScope })
-                }
-
-                if(w is WidgetContainer) drawPageWidgets(route, w.children)
-            }
-        }
-    }
 }

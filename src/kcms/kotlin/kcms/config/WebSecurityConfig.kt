@@ -11,10 +11,10 @@ import org.springframework.security.crypto.password.PasswordEncoder
 
 @Configuration
 class WebSecurityConfig : WebSecurityConfigurerAdapter() {
-    @Value("\${cmd.auth.username:admin}")
+    @Value("\${cms.auth.username:admin}")
     lateinit var authUsername: String
 
-    @Value("\${cmd.auth.password:qqq}")
+    @Value("\${cms.auth.password:qqq}")
     lateinit var authPassword: String
 
     // Настройка авторизации

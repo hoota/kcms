@@ -10,6 +10,8 @@ server:
     enabled: false
 
 cms:
+  url-base: ${KCMS_URL_BASE:http://localhost:${KCMS_HTTP_PORT:8080}}
+  lang: ${KCMS_LANG:en}
   auth:
     username: admin
     password: ${KCMS_AUTH_PASS:qqq}

@@ -2,6 +2,8 @@ package kcms.pages
 
 import kcms.common.ifTrue
 import kcms.files.PageFilesService
+import kcms.ui.SiteMapView
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.io.ClassPathResource
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
@@ -17,9 +19,13 @@ import javax.servlet.http.HttpServletResponse
 
 @Controller
 class PublicPagesController(
+    val pagesRepository: PagesRepository,
     val pageTemplatesService: PageTemplatesService,
     val pageFilesService: PageFilesService,
 ) {
+    @Value("\${cms.url-base}")
+    lateinit var urlBase: String
+
     @GetMapping("/**")
     fun page(
         request: HttpServletRequest,
@@ -66,7 +72,7 @@ class PublicPagesController(
         }
     }
 
-    private fun pageView(request: HttpServletRequest, page: Page) = pageTemplatesService.getTemplate(page.template)?.view(
+    private fun pageView(request: HttpServletRequest, page: Page) = page.template?.view(
         PageTemplateRenderContext(
             request = request,
             page = page,
@@ -75,4 +81,14 @@ class PublicPagesController(
             pageFiles = pageFilesService.getPageFiles(page.id)
         )
     )
+
+    @GetMapping("/sitemap.xml")
+    fun siteMap(): View {
+        return SiteMapView(
+            urlBase,
+            pagesRepository.findAll().filter {
+                it.id >= 0 && it.published
+            }
+        )
+    }
 }

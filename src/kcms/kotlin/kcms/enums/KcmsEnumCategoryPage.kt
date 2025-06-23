@@ -3,6 +3,7 @@ package kcms.enums
 import kcms.ui.KcmsGossRendererView
 import kcms.ui.cms.CommonKcmsPage
 import kcms.ui.cms.MenuModule
+import kcms.ui.cms.i18n.KcmsInternationalization
 import kiss.gossr.spring.GetRoute
 import kiss.gossr.spring.PostRoute
 
@@ -20,7 +21,7 @@ class KcmsEnumCategoryPage(
     val category: KcmsEnumCategory,
     val values: List<EnumValue>
 ) : CommonKcmsPage(
-    title = "Enum Category // ${category.title}",
+    title = "${KcmsInternationalization.instance.enumCategory} // ${category.title}",
     module = MenuModule.ENUMS
 ) {
 
@@ -34,7 +35,7 @@ class KcmsEnumCategoryPage(
             HIDDEN(it::categoryId)
 
             BUTTON("btn btn-primary") {
-                +"New Value"
+                +i18n.newValue
             }
         }
     }
@@ -50,9 +51,9 @@ class KcmsEnumCategoryPage(
             TABLE("table") {
                 THEAD {
                     TR {
-                        TH("Value")
+                        TH(i18n.value)
                         TH {
-                            SUBMIT("btn btn-success", "Save") {
+                            SUBMIT("btn btn-success", i18n.save) {
                                 style("float: right;")
                             }
                         }
@@ -66,7 +67,7 @@ class KcmsEnumCategoryPage(
                     }
                 }
             }
-            SUBMIT("btn btn-success", "Save")
+            SUBMIT("btn btn-success", i18n.save)
         }
     }
 
@@ -105,25 +106,25 @@ class KcmsEnumCategoryPage(
                     }
                     SPAN("btn btn-link move-value-up") {
                         style("border: none; padding: 0 0;")
-                        title("Move on top")
+                        title(i18n.moveToTop)
                         onClick("moveRowOnTop(this)")
                         +"⤒"
                     }
                     SPAN("btn btn-link move-value-up") {
                         style("border: none; padding: 0 0;")
-                        title("Move up")
+                        title(i18n.moveUp)
                         onClick("moveRowUp(this)")
                         +"↑"
                     }
                     SPAN("btn btn-link move-value-down") {
                         style("border: none; padding: 0 0;")
-                        title("Move down")
+                        title(i18n.moveDown)
                         onClick("moveRowDown(this)")
                         +"↓"
                     }
                     SPAN("btn btn-link move-value-down") {
                         style("border: none; padding: 0 0;")
-                        title("Move to the bottom")
+                        title(i18n.moveToTheBottom)
                         onClick("moveRowToBottom(this)")
                         +"⤓"
                     }

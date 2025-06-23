@@ -1,19 +1,37 @@
 package kcms.pages
 
+import kcms.common.nullIfEmpty
 import kcms.enums.EnumValueService
 import kcms.ui.KcmsGossRenderer
+import kcms.widgets.PagePropertyDescriptor
+import kcms.widgets.Widget
 import kcms.widgets.WidgetComponentService
-import kcms.widgets.WidgetPropertyDescriptor
-import kcms.widgets.WidgetPropertyType
 import java.util.*
+import kotlin.math.ceil
+import kotlin.math.roundToInt
 
 class KcmsPropertiesEditBlock(
     val route: WidgetPropertiesSaveRoute,
     val values: Map<String, PageProperty>
 ) : KcmsGossRenderer() {
 
+    fun drawWidgets(widgets: List<Widget>?) {
+        widgets?.forEach { w ->
+            H5 { +w.title }
+            w.forEach { r ->
+                DIV("row ml-2") {
+                    r.forEach { c ->
+                        DIV(if(c.width == null) "col-12 col-md" else "col-12 col-md-${c.width}") {
+                            draw(c.pds)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     fun draw(
-        properties: List<WidgetPropertyDescriptor>
+        properties: Array<out PagePropertyDescriptor>
     ) {
         properties.forEach { p ->
             val v = values.get(p.key)
@@ -21,71 +39,94 @@ class KcmsPropertiesEditBlock(
                 LABEL("font-weight-bold") {
                     +p.title
                 }
-                when(p.type) {
-                    WidgetPropertyType.TEXT -> TEXTAREA("form-control") {
-                        style("width: 100%; height: 200px")
-                        name(p.key)
+                when(p) {
+                    is PagePropertyDescriptor.AsText -> if(p.lines <= 1) INPUT("form-control") {
+                        namePrefix(route::properties) { name(p.key) }
+                        type("text")
+                        required(p.required)
+                        value(v?.text)
+                    } else TEXTAREA("form-control") {
+                        style("width: 100%")
+                        attr("rows", p.lines)
+                        namePrefix(route::properties) { name(p.key) }
                         required(p.required)
                         +v?.text
                     }
 
-                    WidgetPropertyType.STRING -> INPUT("form-control") {
-                        name(p.key)
-                        type("text")
-                        required(p.required)
-                        value(v?.text)
-                    }
-
-                    WidgetPropertyType.DATE -> INPUT("form-control") {
-                        name(p.key)
+                    is PagePropertyDescriptor.AsDate -> INPUT("form-control") {
+                        namePrefix(route::properties) { name(p.key) }
                         type("date")
                         required(p.required)
                         value(v?.date)
                     }
 
-                    WidgetPropertyType.NUMBER -> INPUT("form-control") {
-                        name(p.key)
+                    is PagePropertyDescriptor.AsInt -> INPUT("form-control") {
+                        namePrefix(route::properties) { name(p.key) }
                         type("number")
                         required(p.required)
                         value(v?.number)
-                        min(p.numberMin?.toString())
-                        step(p.numberStep?.toString())
+                        min(p.min.toString())
+                        max(p.max.toString())
                     }
 
-                    WidgetPropertyType.ENUM -> SELECT("form-control") {
-                        name(p.key)
+                    is PagePropertyDescriptor.AsLong -> INPUT("form-control") {
+                        namePrefix(route::properties) { name(p.key) }
+                        type("number")
+                        required(p.required)
+                        value(v?.number)
+                        min(p.min.toString())
+                        max(p.max.toString())
+                    }
+
+                    is PagePropertyDescriptor.AsNumber -> INPUT("form-control") {
+                        namePrefix(route::properties) { name(p.key) }
+                        type("number")
+                        required(p.required)
+                        value(v?.number)
+                        min(p.min?.toString())
+                        max(p.max?.toString())
+                        step(p.step?.toString())
+                    }
+
+                    is PagePropertyDescriptor.AsEnum -> SELECT("form-control") {
+                        namePrefix(route::properties) { name(p.key) }
                         if(!p.required) OPTION("--")
-                        EnumValueService.instance.getEnumValues(p.enumCategory).forEach { e ->
+                        EnumValueService.instance.getEnumValues(p.category).forEach { e ->
                             OPTION(e.id, e.value, selected = v?.number?.toLong() == e.id)
                         }
                     }
 
-                    WidgetPropertyType.ENUMS_SET ->
+                    is PagePropertyDescriptor.AsEnumSet -> namePrefix(route::listProperties) {
                         drawEnumsSetInput(p, v?.asList?.mapNotNull { it.toLongOrNull() } ?: emptyList())
+                    }
 
-                    WidgetPropertyType.WIDGET_COMPONENT -> SELECT("form-control") {
-                        name(p.key)
+                    is PagePropertyDescriptor.AsComponent -> SELECT("form-control") {
+                        namePrefix(route::properties) { name(p.key) }
                         if(!p.required) OPTION("--")
-                        p.widgetComponentClass?.let { clazz ->
+                        p.componentClass?.let { clazz ->
                             WidgetComponentService.instance.getWidgetComponents(clazz).forEach { wc ->
                                 OPTION(wc.key, wc.value.title, selected = v?.text == wc.key)
                             }
                         }
                     }
 
-                    WidgetPropertyType.LIST -> drawListInput(p, v?.asList)
+                    is PagePropertyDescriptor.AsList -> namePrefix(route::listProperties) {
+                        drawListInput(p, v?.asList.nullIfEmpty() ?: listOf(""))
+                    }
 
-                    WidgetPropertyType.MAP -> drawEnumMapInput(p, v?.asMap)
+                    is PagePropertyDescriptor.AsMap -> namePrefix(route::enumMapProperties) {
+                        drawEnumMapInput(p, v?.asMap)
+                    }
                 }
             }
         }
     }
 
     private fun drawEnumsSetInput(
-        p: WidgetPropertyDescriptor,
+        p: PagePropertyDescriptor.AsEnumSet,
         values: List<Long>
     ) = DIV("row") {
-        val enumValues = EnumValueService.instance.getEnumValues(p.enumCategory)
+        val enumValues = EnumValueService.instance.getEnumValues(p.category)
         (0 until p.columns).forEach { c ->
             DIV("col-12 col-md") {
                 enumValues.forEachIndexed { index, e ->
@@ -109,10 +150,10 @@ class KcmsPropertiesEditBlock(
     }
 
     private fun drawEnumMapInput(
-        p: WidgetPropertyDescriptor,
+        p: PagePropertyDescriptor.AsMap,
         values: Map<Long, String>?,
     ) = DIV("row") {
-        val enumValues = EnumValueService.instance.getEnumValues(p.enumCategory)
+        val enumValues = EnumValueService.instance.getEnumValues(p.category)
         (0 until p.columns).forEach { c ->
             DIV("col-12 col-md") {
                 enumValues.forEachIndexed { index, e ->
@@ -132,13 +173,15 @@ class KcmsPropertiesEditBlock(
     }
 
     private fun drawListInput(
-        p: WidgetPropertyDescriptor,
-        values: List<String>?,
-    ) = DIV("row") {
-        (0 until p.columns).forEach { c ->
-            DIV("col-12 col-md") {
-                UL("ul pl-3") {
-                    values?.filterIndexed { index, _ -> index % p.columns == c }?.forEach { v ->
+        p: PagePropertyDescriptor.AsList,
+        values: List<String>,
+    ) {
+        val values = values.chunked(ceil(values.size.toDouble() / p.columns).roundToInt())
+
+        DIV("row") {
+            values.forEach { strings ->
+                UL("col-12 col-md ul ml-3") {
+                    strings.forEach { v ->
                         LI("mb-1") {
                             INPUT("form-control") {
                                 name(p.key)
@@ -147,26 +190,31 @@ class KcmsPropertiesEditBlock(
                             }
                         }
                     }
+                }
+            }
+        }
 
-                    LI("d-none mb-1") {
-                        INPUT("form-control") {
-                            name(p.key)
-                            type("text")
+        DIV("row") {
+            values.forEachIndexed { index, _ ->
+                UL("col-12 col-md ul ml-3") {
+                    if(index == 0) {
+                        LI("d-none mb-1") {
+                            INPUT("form-control") {
+                                name(p.key)
+                                type("text")
+                            }
                         }
-                    }
-                    if(c == 0) LI {
-                        SPAN("btn btn-sm btn-outline-primary") {
-                            onClick(
-                                """
+                        LI {
+                            SPAN("btn btn-sm btn-outline-primary") {
+                                onClick("""
 const ul = $(this).closest('.ul');
 const hiddenLi = ul.find('li.d-none').first();
 if (hiddenLi.length) {
     const newLi = hiddenLi.clone().removeClass('d-none');
     hiddenLi.before(newLi);
-}
-                """
-                            )
-                            +"+"
+}""")
+                                +"+"
+                            }
                         }
                     }
                 }

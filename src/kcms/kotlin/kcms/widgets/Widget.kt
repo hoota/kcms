@@ -4,132 +4,177 @@ import kcms.enums.EnumValue
 import kcms.enums.EnumValueService
 import kcms.enums.KcmsEnumCategory
 import kcms.pages.PageProperty
-import kcms.pages.PageTemplateRenderContext
 import kcms.pages.asList
 import kcms.pages.asMap
 import kcms.ui.KcmsGossRenderer
 import java.math.BigDecimal
+import java.time.LocalDate
 
-enum class WidgetPropertyType {
-    STRING, TEXT, DATE, NUMBER, ENUM, ENUMS_SET, WIDGET_COMPONENT, LIST, MAP
+// enum class PagePropertyType {
+//     STRING, TEXT, DATE, NUMBER, ENUM, ENUMS_SET, WIDGET_COMPONENT, LIST, MAP
+// }
+
+sealed interface PagePropertyDescriptor {
+    val key: String
+    val title: String
+
+    data class AsText(
+        override val key: String,
+        override val title: String,
+        val lines: Int = 1,
+        val required: Boolean = false,
+    ) : PagePropertyDescriptor
+
+    data class AsDate(
+        override val key: String,
+        override val title: String,
+        val required: Boolean = false,
+    ) : PagePropertyDescriptor
+
+    data class AsInt(
+        override val key: String,
+        override val title: String,
+        val required: Boolean = false,
+        val min: Int = Int.MIN_VALUE,
+        val max: Int = Int.MAX_VALUE
+    ) : PagePropertyDescriptor
+
+    data class AsLong(
+        override val key: String,
+        override val title: String,
+        val required: Boolean = false,
+        val min: Long = Long.MIN_VALUE,
+        val max: Long = Long.MAX_VALUE
+    ) : PagePropertyDescriptor
+
+    data class AsNumber(
+        override val key: String,
+        override val title: String,
+        val required: Boolean = false,
+        val min: BigDecimal? = null,
+        val max: BigDecimal? = null,
+        val step: BigDecimal? = null,
+    ) : PagePropertyDescriptor
+
+    data class AsEnum(
+        override val key: String,
+        override val title: String,
+        val required: Boolean = false,
+        val category: KcmsEnumCategory,
+    ) : PagePropertyDescriptor
+
+    data class AsEnumSet(
+        override val key: String,
+        override val title: String,
+        val category: KcmsEnumCategory,
+        val columns: Int = 1
+    ) : PagePropertyDescriptor
+
+    data class AsComponent(
+        override val key: String,
+        override val title: String,
+        val required: Boolean = false,
+        val componentClass: Class<out WidgetComponent>? = null,
+    ) : PagePropertyDescriptor
+
+    data class AsList(
+        override val key: String,
+        override val title: String,
+        val columns: Int = 1
+    ) : PagePropertyDescriptor
+
+    data class AsMap(
+        override val key: String,
+        override val title: String,
+        val category: KcmsEnumCategory,
+        val columns: Int = 1
+    ) : PagePropertyDescriptor
+
 }
-
-class WidgetPropertyDescriptor(
-    val key: String,
-    val title: String,
-    val type: WidgetPropertyType,
-    val globalScope: Boolean = false,
-    val required: Boolean = false,
-    val enumCategory: KcmsEnumCategory? = null,
-    val numberMin: BigDecimal? = null,
-    val numberStep: BigDecimal? = null,
-    val widgetComponentClass: Class<out WidgetComponent>? = null,
-    val columns: Int = 1,
-)
 
 interface WidgetRenderContext {
     fun getProperty(propertyKey: String): PageProperty?
-    fun getProperty(property: WidgetPropertyDescriptor): PageProperty? = getProperty(property.key)
-}
+    fun getProperty(property: PagePropertyDescriptor): PageProperty? = getProperty(property.key)
 
-inline fun <T : Widget> WidgetRenderContext.asText(widget: T, propertyGetter: T.() -> WidgetPropertyDescriptor): String? {
-    return getProperty(propertyGetter.invoke(widget))?.text
-}
+    fun valueOf(p: PagePropertyDescriptor.AsText): String? {
+        return getProperty(p)?.text
+    }
 
-inline fun <T : Widget> WidgetRenderContext.asNumber(widget: T, propertyGetter: T.() -> WidgetPropertyDescriptor): BigDecimal? {
-    return getProperty(propertyGetter.invoke(widget))?.number
-}
+    fun valueOf(p: PagePropertyDescriptor.AsDate): LocalDate? {
+        return getProperty(p)?.date
+    }
 
-inline fun <T : Widget> WidgetRenderContext.asLong(widget: T, propertyGetter: T.() -> WidgetPropertyDescriptor): Long? {
-    return getProperty(propertyGetter.invoke(widget))?.number?.toLong()
-}
+    fun valueOf(p: PagePropertyDescriptor.AsNumber): BigDecimal? {
+        return getProperty(p)?.number
+    }
 
-inline fun <T : Widget> WidgetRenderContext.asInt(widget: T, propertyGetter: T.() -> WidgetPropertyDescriptor): Int? {
-    return getProperty(propertyGetter.invoke(widget))?.number?.toInt()
-}
+    fun valueOf(p: PagePropertyDescriptor.AsLong): Long? {
+        return getProperty(p)?.number?.toLong()
+    }
 
-inline fun <T : Widget> WidgetRenderContext.asList(widget: T, propertyGetter: T.() -> WidgetPropertyDescriptor): List<String>? {
-    return getProperty(propertyGetter.invoke(widget))?.asList
-}
+    fun valueOf(p: PagePropertyDescriptor.AsInt): Int? {
+        return getProperty(p)?.number?.toInt()
+    }
 
-inline fun <T : Widget> WidgetRenderContext.asMap(widget: T, propertyGetter: T.() -> WidgetPropertyDescriptor): Map<Long, String>? {
-    return getProperty(propertyGetter.invoke(widget))?.asMap
-}
+    fun valueOf(p: PagePropertyDescriptor.AsList): List<String>? {
+        return getProperty(p)?.asList
+    }
 
-inline fun <T : Widget> WidgetRenderContext.asEnum(enumCategory: KcmsEnumCategory, widget: T, propertyGetter: T.() -> WidgetPropertyDescriptor): EnumValue? {
-    return getProperty(propertyGetter.invoke(widget))?.number?.toLong()?.let { id ->
-        EnumValueService.instance.getEnumValues(enumCategory).firstOrNull { it.id == id }
+    fun valueOf(p: PagePropertyDescriptor.AsMap): Map<Long, String>? {
+        return getProperty(p)?.asMap
+    }
+
+    fun valueOf(p: PagePropertyDescriptor.AsEnum): EnumValue? {
+        return getProperty(p)?.number?.toLong()?.let { id ->
+            EnumValueService.instance.getEnumValues(p.category).firstOrNull { it.id == id }
+        }
     }
 }
 
+open class Widget(
+    val title: String,
+    val body: Widget.() -> Unit
+) : ArrayList<Widget.Row>() {
 
-interface Widget {
-    val title: String
-    val properties: List<WidgetPropertyDescriptor> get() = propertiesRows?.flatten() ?: emptyList()
-    val propertiesRows: List<List<WidgetPropertyDescriptor>>? get() = null
-}
+    init { body() }
 
-interface ValueWidget<T> : Widget {
-    fun getValue(context: WidgetRenderContext): T?
-}
-
-class NumberValueWidget(
-    val widgetIt: String,
-    override val title: String,
-    globalScope: Boolean,
-) : ValueWidget<BigDecimal> {
-    val propertyDescriptor = WidgetPropertyDescriptor(
-        key = "$widgetIt.value",
-        title = "Number",
-        type = WidgetPropertyType.NUMBER,
-        globalScope = globalScope
+    class Row : ArrayList<Column>() {
+        fun col(width: Int, vararg pds: PagePropertyDescriptor) {
+            add(Column(width, pds))
+        }
+        fun col(vararg pds: PagePropertyDescriptor) {
+            add(Column(width = null, pds))
+        }
+    }
+    class Column(
+        val width: Int?,
+        val pds: Array<out PagePropertyDescriptor>
     )
 
-    override val properties: List<WidgetPropertyDescriptor> = listOf(propertyDescriptor)
+    fun row(body: Widget.Row.() -> Unit) {
+        add(Row().also(body))
+    }
 
-    override fun getValue(context: WidgetRenderContext): BigDecimal? =
-        context.getProperty(propertyDescriptor.key)?.number
-}
-
-interface WidgetContainer : Widget {
-    val children: List<Widget>?
+    fun row(vararg pds: PagePropertyDescriptor) {
+        add(Row().also {
+            it.addAll(pds.map { Column(null, arrayOf(it)) })
+        })
+    }
 }
 
 open class HtmlContentWidget(
-    val widgetId: String,
-    override val title: String,
-    common: Boolean = false,
-) : Widget {
-
-    val propertyDescriptor = WidgetPropertyDescriptor(
+    widgetId: String,
+    title: String,
+    private val propertyDescriptor: PagePropertyDescriptor.AsText = PagePropertyDescriptor.AsText(
         key = "$widgetId.content",
         title = "HTML",
-        type = WidgetPropertyType.TEXT,
-        globalScope = common
+        lines = 10
     )
-
-    override val properties: List<WidgetPropertyDescriptor> = listOf(propertyDescriptor)
+) : Widget(title, {
+    row(propertyDescriptor)
+}) {
 
     fun render(context: WidgetRenderContext, renderer: KcmsGossRenderer) = renderer.apply {
         noEscape(context.getProperty(propertyDescriptor.key)?.text)
     }
-}
-
-open class TextContentWidget(
-    val widgetId: String,
-    override val title: String,
-    type: WidgetPropertyType = WidgetPropertyType.TEXT,
-    common: Boolean = false,
-) : Widget  {
-
-    val propertyDescriptor = WidgetPropertyDescriptor(
-        key = "$widgetId.content",
-        title = "Text",
-        type = type,
-        globalScope = common
-    )
-
-    override val properties: List<WidgetPropertyDescriptor> = listOf(propertyDescriptor)
-
-    fun getValue(p: PageTemplateRenderContext): String? = p.getProperty(propertyDescriptor.key)?.text
 }

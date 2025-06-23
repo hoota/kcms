@@ -6,6 +6,7 @@ import kcms.files.KcmsImageScaleType
 import kcms.files.PageFile
 import kcms.ui.cms.CommonKcmsPage
 import kcms.ui.cms.MenuModule
+import kcms.ui.cms.i18n.KcmsInternationalization
 import org.springframework.stereotype.Component
 
 @Component
@@ -25,7 +26,7 @@ class KcmsPageFilesPage(
     val files: List<PageFile>,
     val noChildren: Boolean
 ) : CommonKcmsPage(
-    title = "Page #${p.id} // ${p.title}",
+    title = "${KcmsInternationalization.instance.page} #${p.id} // ${p.title}",
     module = MenuModule.PAGES,
     showTitleAsHeader = false
 ) {
@@ -34,15 +35,15 @@ class KcmsPageFilesPage(
         DIV("nav nav-tabs mt-1 mb-1") {
             A("nav-item nav-link") {
                 href(KcmsPageRoute(id = p.id, tab = KcmsPageTabs.PROPERTIES))
-                +"Properties"
+                +i18n.properties
             }
             A("nav-item nav-link active show") {
                 href("#")
-                +"Files"
+                +i18n.files
             }
             if(!noChildren) A("nav-item nav-link") {
                 href(KcmsPageRoute(id = p.id, tab = KcmsPageTabs.CHILDREN))
-                +"Children"
+                +i18n.children
             }
         }
     }
@@ -53,7 +54,7 @@ class KcmsPageFilesPage(
             classes("mt-3 page-title")
             A {
                 href(p.slug)
-                +"Page #${p.id}"
+                +"${i18n.page} #${p.id}"
             }
             +" // ${p.title}"
         }
@@ -63,8 +64,6 @@ class KcmsPageFilesPage(
         KcmsFilesListBlock(
             pageId = p.id,
             files = files
-        ).draw {
-            H4("mt-4") { +"Files" }
-        }
+        ).draw()
     }
 }

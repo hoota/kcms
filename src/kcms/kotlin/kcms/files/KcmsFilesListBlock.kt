@@ -8,7 +8,7 @@ class KcmsFilesListBlock(
     val pageId: Long?,
     val files: List<PageFile>
 ) : KcmsGossRenderer() {
-    fun draw(title: KcmsGossRenderer.() -> Unit) {
+    fun draw(title: KcmsGossRenderer.() -> Unit = {}) {
         SCRIPT(src = "https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js")
         LINK(rel = "stylesheet", href = "https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.css")
 
@@ -45,7 +45,7 @@ class KcmsFilesListBlock(
 
         SCRIPT(code = """
 function onRemove(fileId) {
-    if(window.confirm('Are you sure?')) {
+    if(window.confirm(${toJson(i18n.areYouSure)})) {
         const form = $('#file-remove-form')[0];
         form.fileId.value = fileId;
         form.submit();
@@ -122,7 +122,7 @@ function onRemove(fileId) {
                                 BUTTON("btn btn-sm btn-danger") {
                                     style("float: right;")
                                     onClick("onRemove(${f.id})")
-                                    +"remove"
+                                    +i18n.remove
                                 }
                             }
                         }
@@ -168,17 +168,17 @@ document.addEventListener('paste', async (event) => {
         """)
 
         FORM(route) { route ->
-            if(pageId != null) classes("mt-3")
+            classes("mb-2 mt-2")
             style("float: right;")
 
             HIDDEN(route::pageId)
 
             DIV("input-group") {
                 DIV("input-group-prepend") {
-                    SUBMIT("btn btn-outline-secondary", "Upload")
+                    SUBMIT("btn btn-outline-secondary", i18n.upload)
                 }
                 INPUT("form-control") {
-                    placeholder("File URL")
+                    placeholder(i18n.fileUrl)
                     nameValueString(route::fileUrl)
                 }
                 DIV("custom-file") {
@@ -191,7 +191,7 @@ document.addEventListener('paste', async (event) => {
                     }
                     LABEL("custom-file-label") {
                         forAttr("inputGroupFile01")
-                        +"Choose file"
+                        +i18n.chooseFile
                     }
                 }
             }

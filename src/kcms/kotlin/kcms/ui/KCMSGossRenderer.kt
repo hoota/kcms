@@ -12,6 +12,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import kcms.common.nullIfBlank
 import kcms.common.nullIfNaN
+import kcms.ui.cms.i18n.KcmsInternationalization
 import kiss.gossr.spring.GetRoute
 import kiss.gossr.spring.GossSpringRenderer
 import kiss.gossr.spring.GossrSpringView
@@ -31,6 +32,7 @@ import javax.servlet.http.Cookie
 
 @Suppress("FunctionNaming")
 open class KcmsGossRenderer : GossSpringRenderer() {
+    val i18n get() = KcmsInternationalization.instance
 
     override fun csrf(): Pair<String, String>? = (request()?.getAttribute("_csrf") as? CsrfToken)?.let {
         it.parameterName to it.token
