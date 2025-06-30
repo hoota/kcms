@@ -2,6 +2,7 @@ package kcms.pages
 
 import kcms.common.ifTrue
 import kcms.files.PageFilesService
+import kcms.ui.KcmsGossRenderer
 import kcms.ui.SiteMapView
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.io.ClassPathResource
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Controller
 import org.springframework.util.StreamUtils
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.servlet.View
+import java.io.File
 import java.net.URLConnection
 import java.net.URLDecoder
 import java.util.concurrent.TimeUnit
@@ -32,6 +34,19 @@ class PublicPagesController(
         response: HttpServletResponse,
     ): Any? {
         val uri = request.requestURI
+
+        return if(checkForFile(response, uri)) {
+            null
+        } else {
+            pageView(request, response, uri)
+        }
+    }
+
+    private fun checkForFile(response: HttpServletResponse, uri: String): Boolean {
+        if(KcmsGossRenderer.isDevMode && (checkFile(response, "src/kcms/resources/static/$uri") || checkFile(response, "src/project/resources/static/$uri"))) {
+            return true
+        }
+
         val resource = ClassPathResource("static$uri")
         if(resource.exists() && resource.file.isFile) {
             var mimeType = URLConnection.guessContentTypeFromName(uri)
@@ -46,10 +61,34 @@ class PublicPagesController(
             resource.inputStream.use {
                 StreamUtils.copy(it, response.outputStream.buffered(64000))
             }
-            return null
+            return true
         }
 
-        return pageView(request, response, uri)
+        return false
+    }
+
+    private fun checkFile(response: HttpServletResponse, path: String): Boolean {
+        val file = File(path)
+        if(file.exists() && file.isFile) {
+            var mimeType = URLConnection.guessContentTypeFromName(path)
+            if(mimeType == null) {
+                mimeType = MediaType.APPLICATION_OCTET_STREAM_VALUE
+            }
+
+            response.setHeader(HttpHeaders.PRAGMA, "no-cache")
+            response.setHeader(HttpHeaders.EXPIRES, "0")
+            response.setHeader(HttpHeaders.CACHE_CONTROL, "no-store, no-cache, must-revalidate, max-age=0")
+
+            response.contentType = mimeType
+
+            file.inputStream().use {
+                StreamUtils.copy(it, response.outputStream.buffered(64000))
+            }
+
+            return true
+        }
+
+        return false
     }
 
     fun pageView(

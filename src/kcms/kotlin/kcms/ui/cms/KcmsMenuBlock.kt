@@ -112,7 +112,7 @@ class KcmsMenuBlock : KcmsGossRenderer() {
                             +i18n.enums
                         }
                     }
-                    if(System.getProperty("dev-mode") == "true") LI {
+                    if(isDevMode) LI {
                         classes("nav-item")
 
                         A {

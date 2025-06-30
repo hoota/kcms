@@ -48,7 +48,7 @@ interface KcmsI18n {
     val save: String
     val value: String
     val enumCategory: String
-    val newValue: String
+    val newValues: String
     val more: String
 }
 

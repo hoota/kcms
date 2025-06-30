@@ -124,6 +124,10 @@ interface WidgetRenderContext {
         return getProperty(p)?.asMap
     }
 
+    fun longOf(p: PagePropertyDescriptor.AsEnum): Long? {
+        return getProperty(p)?.number?.toLong()
+    }
+
     fun valueOf(p: PagePropertyDescriptor.AsEnum): EnumValue? {
         return getProperty(p)?.number?.toLong()?.let { id ->
             EnumValueService.instance.getEnumValues(p.category).firstOrNull { it.id == id }
@@ -165,16 +169,16 @@ open class Widget(
 open class HtmlContentWidget(
     widgetId: String,
     title: String,
-    private val propertyDescriptor: PagePropertyDescriptor.AsText = PagePropertyDescriptor.AsText(
+    val property: PagePropertyDescriptor.AsText = PagePropertyDescriptor.AsText(
         key = "$widgetId.content",
         title = "HTML",
         lines = 10
     )
 ) : Widget(title, {
-    row(propertyDescriptor)
+    row(property)
 }) {
 
     fun render(context: WidgetRenderContext, renderer: KcmsGossRenderer) = renderer.apply {
-        noEscape(context.getProperty(propertyDescriptor.key)?.text)
+        noEscape(context.getProperty(property.key)?.text)
     }
 }

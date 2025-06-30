@@ -58,6 +58,8 @@ fun String?.nullIfBlank(): String? = this?.trim()?.let {
     it.ifEmpty { null }
 }
 
+inline fun <T> ifNot(b: Boolean, body: () -> T) = if(b) null else body()
+
 fun <T> Collection<T>.containsAny(other: Collection<T>): Boolean =
     other.any { this.contains(it) }
 

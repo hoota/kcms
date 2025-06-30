@@ -6,8 +6,8 @@ import org.springframework.stereotype.Component
 class KcmsI18nRu : KcmsI18n {
     override val more: String
         get() = "Ещё..."
-    override val newValue: String
-        get() = "Новое значение"
+    override val newValues: String
+        get() = "Новые значения"
     override val enumCategory: String
         get() = "Перечисление"
     override val value: String

@@ -1,6 +1,7 @@
 package kcms.enums
 
 import kcms.common.CommonService
+import kcms.common.nullIfBlank
 import kiss.gossr.spring.RouteHandler
 import org.springframework.stereotype.Component
 import org.springframework.web.servlet.View
@@ -42,6 +43,19 @@ class KcmsEnumsController(
                     )
                 }
             }
+            val maxOrder = route.orders.values.maxOrNull() ?: 0
+            route.multiValue?.split("\n")?.forEachIndexed { index, line ->
+                line.nullIfBlank()?.let { v ->
+                    enumValueRepository.save(
+                        EnumValue(
+                            id = enumValueRepository.nextId(),
+                            category = route.categoryId,
+                            value = v,
+                            order = maxOrder + index
+                        )
+                    )
+                }
+            }
         }
 
         enumValueService.resetCaches()
@@ -49,16 +63,4 @@ class KcmsEnumsController(
         return redirect(KcmsEnumsCategoriesRoute())
     }
 
-    @RouteHandler
-    fun newEnumValue(route: KcmsEnumCategoryNewValueRoute): View {
-        val id = enumValueRepository.nextId()
-        return KcmsEnumCategoryPage.NewValueRowView(
-            EnumValue(
-                id = id,
-                category = route.categoryId,
-                value = "",
-                order = -id.toInt()
-            )
-        )
-    }
 }

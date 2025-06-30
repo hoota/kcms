@@ -44,7 +44,7 @@ open class KcmsGossRenderer : GossSpringRenderer() {
 
     fun getResourceUrlWithVersion(path: String): String = resourceVersions.computeIfAbsent(path) {
         val resource = ClassPathResource("static$path")
-        if(resource.exists() && resource.file.isFile) {
+        if(!isDevMode && resource.exists() && resource.file.isFile) {
             val ver = resource.inputStream.use { DigestUtils.md5DigestAsHex(it) }
             "$path?v=$ver"
         } else {
@@ -102,6 +102,8 @@ open class KcmsGossRenderer : GossSpringRenderer() {
     fun toJson(a: Any?): String = objectMapper.writeValueAsString(a)
 
     companion object {
+        val isDevMode = System.getProperty("dev-mode") == "true"
+
         val objectMapper = createObjectMapper()
 
         val resourceVersions = ConcurrentHashMap<String, String>()
