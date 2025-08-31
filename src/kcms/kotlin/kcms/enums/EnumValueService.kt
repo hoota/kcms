@@ -11,7 +11,8 @@ import kotlin.jvm.optionals.getOrNull
 
 @Service
 class EnumValueService(
-    val categories: List<KcmsEnumCategory>,
+    private val providers: List<KcmsEnumCategoryProvider>,
+    private val categories: List<KcmsEnumCategory>,
     val enumValueRepository: EnumValueRepository,
 ) : Caching {
 
@@ -44,6 +45,10 @@ class EnumValueService(
         enumValuesCacheById.invalidateAll()
     }
 
+    fun getCategoriesList(): List<KcmsEnumCategory> {
+        return categories + providers.flatMap { it.getCategories() }
+    }
+
     @PostConstruct
     fun postConstruct() {
         instance = this
@@ -57,4 +62,8 @@ class EnumValueService(
 interface KcmsEnumCategory {
     val id: String
     val title: String
+}
+
+interface KcmsEnumCategoryProvider {
+    fun getCategories(): List<KcmsEnumCategory>
 }

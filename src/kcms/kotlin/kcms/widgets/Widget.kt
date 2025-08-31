@@ -26,20 +26,26 @@ sealed interface PagePropertyDescriptor {
         val lines: Int = 1,
         val required: Boolean = false,
         val htmlEditor: Boolean = false,
-    ) : PagePropertyDescriptor
+    ) : PagePropertyDescriptor {
+        fun valueOf(c: WidgetRenderContext) = c.valueOf(this)
+    }
 
     data class AsBool(
         override val key: String,
         override val title: String,
         val trueLabel: String? = null,
         val falseLabel: String? = null,
-    ) : PagePropertyDescriptor
+    ) : PagePropertyDescriptor {
+        fun valueOf(c: WidgetRenderContext) = c.valueOf(this)
+    }
 
     data class AsDate(
         override val key: String,
         override val title: String,
         val required: Boolean = false,
-    ) : PagePropertyDescriptor
+    ) : PagePropertyDescriptor {
+        fun valueOf(c: WidgetRenderContext) = c.valueOf(this)
+    }
 
     data class AsInt(
         override val key: String,
@@ -47,7 +53,9 @@ sealed interface PagePropertyDescriptor {
         val required: Boolean = false,
         val min: Int = Int.MIN_VALUE,
         val max: Int = Int.MAX_VALUE
-    ) : PagePropertyDescriptor
+    ) : PagePropertyDescriptor {
+        fun valueOf(c: WidgetRenderContext) = c.valueOf(this)
+    }
 
     data class AsLong(
         override val key: String,
@@ -55,7 +63,9 @@ sealed interface PagePropertyDescriptor {
         val required: Boolean = false,
         val min: Long = Long.MIN_VALUE,
         val max: Long = Long.MAX_VALUE
-    ) : PagePropertyDescriptor
+    ) : PagePropertyDescriptor {
+        fun valueOf(c: WidgetRenderContext) = c.valueOf(this)
+    }
 
     data class AsNumber(
         override val key: String,
@@ -64,14 +74,18 @@ sealed interface PagePropertyDescriptor {
         val min: BigDecimal? = null,
         val max: BigDecimal? = null,
         val step: BigDecimal? = null,
-    ) : PagePropertyDescriptor
+    ) : PagePropertyDescriptor {
+        fun valueOf(c: WidgetRenderContext) = c.valueOf(this)
+    }
 
     data class AsEnum(
         override val key: String,
         override val title: String,
         val required: Boolean = false,
         val category: KcmsEnumCategory,
-    ) : PagePropertyDescriptor
+    ) : PagePropertyDescriptor {
+        fun valueOf(c: WidgetRenderContext) = c.valueOf(this)
+    }
 
     data class AsEnumSet(
         override val key: String,
@@ -91,14 +105,18 @@ sealed interface PagePropertyDescriptor {
         override val key: String,
         override val title: String,
         val columns: Int = 1
-    ) : PagePropertyDescriptor
+    ) : PagePropertyDescriptor {
+        fun valueOf(c: WidgetRenderContext) = c.valueOf(this)
+    }
 
     data class AsMap(
         override val key: String,
         override val title: String,
         val category: KcmsEnumCategory,
         val columns: Int = 1
-    ) : PagePropertyDescriptor
+    ) : PagePropertyDescriptor {
+        fun valueOf(c: WidgetRenderContext) = c.valueOf(this)
+    }
 
 }
 

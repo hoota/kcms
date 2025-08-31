@@ -102,7 +102,7 @@ class KcmsMenuBlock : KcmsGossRenderer() {
                             +i18n.backgroundJobs
                         }
                     }
-                    if(EnumValueService.instance.categories.isNotEmpty()) LI {
+                    if(EnumValueService.instance.getCategoriesList().isNotEmpty()) LI {
                         classes("nav-item")
                         if(module == MenuModule.ENUMS) classes("active")
 

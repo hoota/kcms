@@ -136,3 +136,12 @@ databaseChangeLog:
             splitStatements: false
             relativeToChangelogFile: true
             path: kcms_site_property.sql
+
+  - changeSet:
+      id: kcms_enum_category.sql
+      author: andrey
+      changes:
+        - sqlFile:
+            splitStatements: false
+            relativeToChangelogFile: true
+            path: kcms_enum_category.sql

@@ -11,6 +11,10 @@ class KcmsI18nEn : KcmsI18n {
         get() = "Enum Category"
     override val value: String
         get() = "Value"
+    override val close: String
+        get() = "Close"
+    override val edit: String
+        get() = "Edit"
     override val save: String
         get() = "Save"
     override val moveToTop: String
@@ -31,6 +35,8 @@ class KcmsI18nEn : KcmsI18n {
         get() = "Background Jobs"
     override val enums: String
         get() = "Enums"
+    override val addCategory: String
+        get() = "Add Category"
     override val category: String
         get() = "Category"
     override val enumCategories: String

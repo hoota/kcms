@@ -36,6 +36,7 @@ interface KcmsI18n {
     val jobName: String
     val sharedFiles: String
     val enumCategories: String
+    val addCategory: String
     val category: String
     val enums: String
     val backgroundJobs: String
@@ -46,7 +47,9 @@ interface KcmsI18n {
     val moveDown: String
     val moveUp: String
     val moveToTop: String
+    val edit: String
     val save: String
+    val close: String
     val value: String
     val enumCategory: String
     val newValues: String

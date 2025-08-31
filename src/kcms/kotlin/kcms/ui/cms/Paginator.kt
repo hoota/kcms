@@ -42,6 +42,9 @@ data class PagedData<T>(
     }
 }
 
+fun <T> Sequence<T>.paged(page:Int, pageSize: Int) = PagedData.of(this, page, pageSize) { it }
+fun <T, R> Sequence<T>.paged(page:Int, pageSize: Int, enricher: (List<T>) -> List<R>) = PagedData.of(this, page, pageSize, enricher)
+
 class Paginator : KcmsGossRenderer() {
     fun <T> draw(data: PagedData<T>, routeBuilder: (Int) -> GetRoute) {
         if(data.lastPage <= 1) return

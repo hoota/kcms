@@ -1,0 +1,6 @@
+DROP TABLE IF EXISTS kcms_enum_category CASCADE;
+CREATE TABLE kcms_enum_category (
+	id VARCHAR NOT NULL PRIMARY KEY,
+	title VARCHAR NOT NULL
+);
+

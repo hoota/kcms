@@ -1,6 +1,5 @@
 package kcms.enums
 
-import kcms.ui.KcmsGossRendererView
 import kcms.ui.cms.CommonKcmsPage
 import kcms.ui.cms.MenuModule
 import kcms.ui.cms.WithOrdersRoute
@@ -11,7 +10,7 @@ import kiss.gossr.spring.PostRoute
 
 data class KcmsEnumCategoryRoute(val c: String) : GetRoute
 
-data class KcmsEnumCategorySaveRoute(
+data class KcmsEnumCategorySaveItemsRoute(
     val categoryId: String,
     val values: MutableMap<Long, String> = HashMap(),
     override val orders: MutableMap<Long, Int> = HashMap(),
@@ -27,7 +26,7 @@ class KcmsEnumCategoryPage(
 ) {
 
     override fun pageBody() {
-        FORM(KcmsEnumCategorySaveRoute(categoryId = category.id)) { route ->
+        FORM(KcmsEnumCategorySaveItemsRoute(categoryId = category.id)) { route ->
             HIDDEN(route::categoryId)
             TABLE("table") {
                 THEAD {
@@ -55,7 +54,7 @@ class KcmsEnumCategoryPage(
         }
     }
 
-    fun valueTr(route: KcmsEnumCategorySaveRoute, v: EnumValue) {
+    fun valueTr(route: KcmsEnumCategorySaveItemsRoute, v: EnumValue) {
         TR("enum-value") {
             TD {
                 namePrefix(route::values) {

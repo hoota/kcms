@@ -12,6 +12,10 @@ class KcmsI18nRu : KcmsI18n {
         get() = "Перечисление"
     override val value: String
         get() = "Значение"
+    override val close: String
+        get() = "Закрыть"
+    override val edit: String
+        get() = "Редактировать"
     override val save: String
         get() = "Сохранить"
     override val moveToTop: String
@@ -32,6 +36,8 @@ class KcmsI18nRu : KcmsI18n {
         get() = "Фоновые задачи"
     override val enums: String
         get() = "Перечисления"
+    override val addCategory: String
+        get() = "Добавить категорию"
     override val category: String
         get() = "Категория"
     override val enumCategories: String
