@@ -174,7 +174,9 @@ class PageFilesService(
     fun save(pageId: Long?, url: String) {
         val url = URL(url)
 
-        val origName = url.file?.replace(Regex(".*/([^/]+)$"), "$1") ?: ""
+        val origName = url.file
+            ?.replace(Regex("\\?[^?]*$"), "")
+            ?.replace(Regex(".*/([^/]+)$"), "$1") ?: ""
 
         val type = PageFileType.values().firstOrNull { t ->
             t.ext.any { e -> origName.endsWith(".$e", ignoreCase = true) }

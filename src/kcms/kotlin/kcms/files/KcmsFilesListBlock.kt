@@ -2,6 +2,7 @@ package kcms.files
 
 import kcms.common.nullIfBlank
 import kcms.ui.KcmsGossRenderer
+import kcms.ui.cms.orderChangeBlock
 import kiss.gossr.spring.RoutesHelper
 
 class KcmsFilesListBlock(
@@ -38,11 +39,6 @@ class KcmsFilesListBlock(
             HIDDEN(route::fileId)
         }
 
-        STYLE("""
-            tr:first-of-type span.move-value-up { display: none; }          
-            tr:last-of-type span.move-value-down { display: none; }          
-        """)
-
         SCRIPT(code = """
 function onRemove(fileId) {
     if(window.confirm(${toJson(i18n.areYouSure)})) {
@@ -62,41 +58,8 @@ function onRemove(fileId) {
                         TR {
                             TD {
                                 +f.id.toString()
-                                namePrefix(route::orders) {
-                                    INPUT("order") {
-                                        name(f.id.toString())
-                                        type("hidden")
-                                        value(f.order)
-                                    }
-                                }
-                                DIV {
-                                    SPAN("btn btn-link move-value-up") {
-                                        style("border: none; padding: 0 0;")
-                                        title("Move on top")
-                                        onClick("moveRowOnTop(this, true)")
-                                        +"⤒"
-                                    }
-                                    SPAN("btn btn-link move-value-up") {
-                                        style("border: none; padding: 0 0;")
-                                        title("Move up")
-                                        onClick("moveRowUp(this, true)")
-                                        +"↑"
-                                    }
-                                }
-                                DIV {
-                                    SPAN("btn btn-link move-value-down") {
-                                        style("border: none; padding: 0 0;")
-                                        title("Move to the bottom")
-                                        onClick("moveRowToBottom(this, true)")
-                                        +"⤓"
-                                    }
-                                    SPAN("btn btn-link move-value-down") {
-                                        style("border: none; padding: 0 0;")
-                                        title("Move down")
-                                        onClick("moveRowDown(this, true)")
-                                        +"↓"
-                                    }
-                                }
+                                BR()
+                                orderChangeBlock(route, f.id, f.order, true)
                             }
                             TD {
                                 if(f.symlink != null) {

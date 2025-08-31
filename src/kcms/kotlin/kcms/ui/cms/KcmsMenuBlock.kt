@@ -10,7 +10,7 @@ import kcms.ui.KcmsGossRenderer
 import kcms.ui.cms.htmlparser.KcmsHtmlParseRoute
 
 enum class MenuModule {
-    PAGES, JOBS, TEMPLATES, ENUMS, FILES;
+    PAGES, JOBS, SETTINGS, ENUMS, FILES;
 }
 
 class KcmsMenuBlock : KcmsGossRenderer() {
@@ -74,12 +74,12 @@ class KcmsMenuBlock : KcmsGossRenderer() {
                     }
                     LI {
                         classes("nav-item")
-                        if(module == MenuModule.TEMPLATES) classes("active")
+                        if(module == MenuModule.SETTINGS) classes("active")
 
                         A {
                             classes("nav-link")
-                            href(KcmsPagesController.KcmsTemplatesListRoute())
-                            +i18n.templates
+                            href(KcmsPagesController.KcmsSiteSettingsRoute())
+                            +i18n.settings
                         }
                     }
                     LI {

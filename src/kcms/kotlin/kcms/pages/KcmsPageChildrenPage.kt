@@ -3,6 +3,7 @@ package kcms.pages
 import kcms.ui.cms.CommonKcmsPage
 import kcms.ui.cms.MenuModule
 import kcms.ui.cms.i18n.KcmsInternationalization
+import kcms.ui.cms.orderChangeBlock
 
 class KcmsPageChildrenPage(
     val p: Page,
@@ -40,11 +41,6 @@ class KcmsPageChildrenPage(
         }
 
         drawTabs()
-
-        STYLE("""
-            tr:first-of-type span.move-value-up { display: none; }          
-            tr:last-of-type span.move-value-down { display: none; }          
-        """)
 
         FORM(KcmsPagesController.KcmsPagesOrderSaveRoute()) { route ->
             ajaxForm()
@@ -89,37 +85,7 @@ class KcmsPageChildrenPage(
                                 +if(p.published) i18n.yes else i18n.no
                             }
                             TD {
-                                namePrefix(route::orders) {
-                                    INPUT("order") {
-                                        name(p.id.toString())
-                                        type("hidden")
-                                        value(p.order)
-                                    }
-                                }
-                                SPAN("btn btn-link move-value-up") {
-                                    style("border: none; padding: 0 0;")
-                                    title(i18n.moveToTop)
-                                    onClick("moveRowOnTop(this, true)")
-                                    +"⤒"
-                                }
-                                SPAN("btn btn-link move-value-up") {
-                                    style("border: none; padding: 0 0;")
-                                    title(i18n.moveUp)
-                                    onClick("moveRowUp(this, true)")
-                                    +"↑"
-                                }
-                                SPAN("btn btn-link move-value-down") {
-                                    style("border: none; padding: 0 0;")
-                                    title(i18n.moveDown)
-                                    onClick("moveRowDown(this, true)")
-                                    +"↓"
-                                }
-                                SPAN("btn btn-link move-value-down") {
-                                    style("border: none; padding: 0 0;")
-                                    title(i18n.moveToTheBottom)
-                                    onClick("moveRowToBottom(this, true)")
-                                    +"⤓"
-                                }
+                                orderChangeBlock(route, p.id, p.order, true)
                             }
                         }
                     }

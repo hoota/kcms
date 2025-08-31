@@ -112,10 +112,10 @@ class PublicPagesController(
     }
 
     private fun pageView(request: HttpServletRequest, page: Page) = page.template?.view(
+        request,
         PageTemplateRenderContext(
-            request = request,
             page = page,
-            rootProperties =  pageTemplatesService.getPageProperties(0),
+            siteProperties =  pageTemplatesService.getSiteProperties(),
             pageProperties = pageTemplatesService.getPageProperties(page.id),
             pageFiles = pageFilesService.getPageFiles(page.id)
         )

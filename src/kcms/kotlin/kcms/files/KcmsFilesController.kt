@@ -6,6 +6,7 @@ import kcms.common.nullIfEmpty
 import kcms.pages.KcmsPageRoute
 import kcms.pages.KcmsPageTabs
 import kcms.pages.KcmsPagesController
+import kcms.ui.cms.WithOrdersRoute
 import kiss.gossr.spring.GetRoute
 import kiss.gossr.spring.MultipartPostRoute
 import kiss.gossr.spring.PostRoute
@@ -33,8 +34,8 @@ class KcmsFilesController(
     }
 
     data class KcmsFilesOrderSaveRoute(
-        val orders: MutableMap<Long, Int> = HashMap(),
-    ) : PutRoute
+        override val orders: MutableMap<Long, Int> = HashMap(),
+    ) : PutRoute, WithOrdersRoute
 
     @RouteHandler
     fun orderSave(

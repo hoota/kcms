@@ -46,11 +46,9 @@ interface PagesRepository : LongIdCrudRepository<Page> {
     fun findByTemplateIdIn(templates: Iterable<String>): List<Page>
 
     @Query("""
-        SELECT p.* FROM kcms_page p WHERE p.id IN (
-            SELECT c.parent_id FROM kcms_page c WHERE c.parent_id IS NOT NULL
-        )
+        SELECT DISTINCT(c.parent_id) FROM kcms_page c WHERE c.parent_id IS NOT NULL
     """, nativeQuery = true)
-    fun findParents(): List<Page>
+    fun findParents(): List<Long>
 
     @Query("""SELECT nextval('${Page.GENERATOR_NAME}')""", nativeQuery = true)
     fun nextPageId(): Long

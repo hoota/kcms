@@ -1,6 +1,8 @@
 package kcms.ui.cms
 
+import kcms.ui.KcmsGossRenderer
 import kcms.ui.KcmsGossRendererView
+import kcms.ui.cms.i18n.KcmsInternationalization
 import kiss.gossr.spring.GetRoute
 import java.util.*
 
@@ -49,6 +51,8 @@ abstract class CommonKcmsPage(
                     .bg-gray { background-color: #eee!important; }
                     table .merged-row { border-top: 0; padding-top: 0; }
                     table.no-top-border thead tr:first-child th { border-top: none; }
+                    tr:first-of-type span.move-value-up { display: none; }          
+                    tr:last-of-type span.move-value-down { display: none; }          
                     
                     ::placeholder {
                         transition: opacity 0.2s;
@@ -119,7 +123,14 @@ $(document).ready($(function() {
     $('.js-date').datepicker({dateFormat: "yy-mm-dd"});
 }));
     """)
+    }
 
+    fun includeTrumbowyg() {
+        LINK(rel = "stylesheet", href = "https://cdn.jsdelivr.net/npm/trumbowyg@2.31.0/dist/ui/trumbowyg.min.css")
+        SCRIPT(src = "https://cdn.jsdelivr.net/npm/trumbowyg@2.31.0/dist/trumbowyg.min.js")
+        if(KcmsInternationalization.language != "en") {
+            SCRIPT(src = "https://cdn.jsdelivr.net/npm/trumbowyg@2.31.0/dist/langs/${KcmsInternationalization.language}.min.js")
+        }
     }
 
     internal data class Tab(
@@ -192,5 +203,48 @@ $(document).ready($(function() {
 
             }
         }
+    }
+}
+
+interface WithOrdersRoute {
+    val orders: MutableMap<Long, Int>
+}
+
+fun KcmsGossRenderer.orderChangeBlock(
+    route: WithOrdersRoute,
+    id: Long,
+    order: Int,
+    submitOnClick: Boolean
+) {
+    namePrefix(route::orders) {
+        INPUT("order") {
+            name(id.toString())
+            type("hidden")
+            value(order)
+        }
+    }
+    SPAN("btn btn-link move-value-up") {
+        style("border: none; padding: 0 0;")
+        title(i18n.moveToTop)
+        onClick("moveRowOnTop(this, $submitOnClick)")
+        +"⤒"
+    }
+    SPAN("btn btn-link move-value-up") {
+        style("border: none; padding: 0 0;")
+        title(i18n.moveUp)
+        onClick("moveRowUp(this, $submitOnClick)")
+        +"↑"
+    }
+    SPAN("btn btn-link move-value-down") {
+        style("border: none; padding: 0 0;")
+        title(i18n.moveDown)
+        onClick("moveRowDown(this, $submitOnClick)")
+        +"↓"
+    }
+    SPAN("btn btn-link move-value-down") {
+        style("border: none; padding: 0 0;")
+        title(i18n.moveToTheBottom)
+        onClick("moveRowToBottom(this, $submitOnClick)")
+        +"⤓"
     }
 }

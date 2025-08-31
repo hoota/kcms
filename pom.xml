@@ -90,7 +90,7 @@
         <dependency>
             <groupId>com.github.hoota</groupId>
             <artifactId>gossr-kotlin-spring</artifactId>
-            <version>0.4.4</version>
+            <version>0.5.6</version>
         </dependency>
 
         <dependency>

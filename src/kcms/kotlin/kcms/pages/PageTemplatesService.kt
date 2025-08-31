@@ -3,22 +3,31 @@ package kcms.pages
 import com.google.common.cache.CacheBuilder
 import kcms.common.Caching
 import kcms.common.CommonService
+import kcms.common.OneValueCache
 import kcms.common.chunkedLists
 import kcms.common.nullIfBlank
 import kcms.common.orNull
 import kcms.files.PageFilesService
+import kcms.widgets.PagePropertyDescriptor
 import org.springframework.stereotype.Service
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import javax.annotation.PostConstruct
-import javax.servlet.http.HttpServletRequest
 
 class PageTreeNode {
     lateinit var p: Page
+    var itemsCount: Int = 0
     val children = ArrayList<PageTreeNode>()
+
     val myAndChildrenIds: List<Long> by lazy {
         myAndChildrenIds()
     }
+
+    val myAndChildrenItemsCount: Int by lazy {
+        myAndChildrenItemsCount()
+    }
+
+    private fun myAndChildrenItemsCount(): Int = children.sumOf { it.myAndChildrenItemsCount } + itemsCount
 
     private fun myAndChildrenIds(): List<Long> = children.flatMap {
         it.myAndChildrenIds()
@@ -30,6 +39,7 @@ class PageTemplatesService(
     val templates: List<PageTemplate>,
     val pagesRepository: PagesRepository,
     val pagePropertyRepository: PagePropertyRepository,
+    val sitePropertyRepository: SitePropertyRepository,
     val pageFilesService: PageFilesService,
 ) : CommonService(), Caching {
     private val templatesMap = templates.associateBy { it.templateId }
@@ -39,34 +49,45 @@ class PageTemplatesService(
         .softValues()
         .build<Long, Map<String, PageProperty>>()
 
-    private val pagesTree = AtomicReference<Map<Long, PageTreeNode>>(null)
-
-    override fun resetCaches() {
-        propertiesByPageCache.invalidateAll()
-        pagesTree.set(null)
+    private val sitePropertiesCache = OneValueCache(
+        timeout = 24,
+        timeunit = TimeUnit.HOURS
+    ) {
+        sitePropertyRepository.findAll().associateBy { it.key }
     }
 
-    fun getPagesTree(): Map<Long, PageTreeNode> {
-        pagesTree.get()?.let {
-            return it
-        }
-
+    private val pagesTree = OneValueCache(
+        timeout = 24,
+        timeunit = TimeUnit.HOURS
+    ) {
         val tree = LinkedHashMap<Long, PageTreeNode>()
+        val parentTemplates = templates.filterIsInstance<CouldBeParentPageTemplate>().map { it.templateId }.toSet()
+        val parentIds = pagesRepository.findParents().toSet()
 
-        (pagesRepository.findByTemplateIdIn(
-            templates.filterIsInstance<CouldBeParentPageTemplate>().map { it.templateId }
-        ) + pagesRepository.findParents()).distinctBy { it.id }.sortedBy { it.order }.forEach { p ->
-            val node = tree.computeIfAbsent(p.id) { PageTreeNode() }
-            node.p = p
-            p.parentId?.let { parentId ->
-                tree.computeIfAbsent(parentId) { PageTreeNode() }.children.add(node)
+        pagesRepository.findAll().sortedBy { it.order }.forEach { p ->
+            if(p.id in parentIds || p.templateId in parentTemplates) {
+                val node = tree.computeIfAbsent(p.id) { PageTreeNode() }
+                node.p = p
+                p.parentId?.let { parentId ->
+                    tree.computeIfAbsent(parentId) { PageTreeNode() }.children.add(node)
+                }
+            } else {
+                p.parentId?.let { parentId ->
+                    tree.computeIfAbsent(parentId) { PageTreeNode() }.itemsCount++
+                }
             }
         }
 
-        pagesTree.set(tree)
-
-        return tree
+        tree
     }
+
+    override fun resetCaches() {
+        propertiesByPageCache.invalidateAll()
+        sitePropertiesCache.reset()
+        pagesTree.reset()
+    }
+
+    fun getPagesTree(): Map<Long, PageTreeNode> = pagesTree.value ?: emptyMap()
 
     fun getTemplate(id: String): PageTemplate? = templatesMap[id]
     fun getTemplate(p: Page): PageTemplate? = templatesMap[p.templateId]
@@ -74,6 +95,8 @@ class PageTemplatesService(
     fun getPageProperties(pageId: Long) = propertiesByPageCache.get(pageId) {
         pagePropertyRepository.findByIdPageId(pageId).map { it.copy() }.associateBy { it.id.propertyId }
     }
+
+    fun getSiteProperties(): Map<String, SiteProperty> = sitePropertiesCache.value ?: emptyMap()
 
     fun getPagesProperties(pageIds: List<Long>): Map<Long, Map<String, PageProperty>> {
         val result = HashMap<Long, Map<String, PageProperty>>()
@@ -144,7 +167,7 @@ class PageTemplatesService(
         }
     }
 
-    fun getChildren(request: HttpServletRequest, parentIds: List<Long>, limit: Int? = null): Sequence<PageTemplateRenderContext> {
+    fun getChildren(parentIds: List<Long>, limit: Int? = null): Sequence<PageTemplateRenderContext> {
         var children = pagesRepository.findByParentIdInOrderByOrder(parentIds)
             .asSequence()
             .filter { it.published }
@@ -153,22 +176,21 @@ class PageTemplatesService(
 
 
         return children.chunked(100).flatMap { pages ->
-            toPageContext(request, pages)
+            toPageContext(pages)
         }
     }
 
-    fun toPageContext(request: HttpServletRequest, pages: List<Page>): List<PageTemplateRenderContext> {
+    fun toPageContext(pages: List<Page>): List<PageTemplateRenderContext> {
         val pageIds = pages.map { it.id }.toList()
         val properties = getPagesProperties(pageIds)
         val files = pageFilesService.getPagesFiles(pageIds)
 
         return pages.map { page ->
             PageTemplateRenderContext(
-                request = request,
                 page = page,
-                rootProperties = getPageProperties(0L),
+                siteProperties = sitePropertiesCache.value,
                 pageProperties = properties[page.id] ?: emptyMap(),
-                pageFiles = files[page.id] ?: emptyList()
+                pageFiles = files[page.id]?.sortedBy { it.order } ?: emptyList()
             )
         }
     }
@@ -176,6 +198,12 @@ class PageTemplatesService(
     @PostConstruct
     fun postConstruct() {
         instance = this
+    }
+
+    fun removePageProperty(pageId: Long, descriptor: PagePropertyDescriptor) = transaction {
+        pagePropertyRepository.deleteById(PagePropertyId(
+            pageId = pageId, propertyId = descriptor.key
+        ))
     }
 
     companion object {

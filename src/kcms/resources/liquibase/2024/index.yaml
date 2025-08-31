@@ -127,3 +127,12 @@ databaseChangeLog:
             sql: >
               ALTER TABLE public.kcms_page ADD COLUMN IF NOT EXISTS ord INT NOT NULL DEFAULT 0;
               UPDATE public.kcms_page SET ord = id;
+
+  - changeSet:
+      id: kcms_site_property.sql
+      author: andrey
+      changes:
+        - sqlFile:
+            splitStatements: false
+            relativeToChangelogFile: true
+            path: kcms_site_property.sql

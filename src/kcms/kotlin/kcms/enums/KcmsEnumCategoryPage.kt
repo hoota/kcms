@@ -3,7 +3,9 @@ package kcms.enums
 import kcms.ui.KcmsGossRendererView
 import kcms.ui.cms.CommonKcmsPage
 import kcms.ui.cms.MenuModule
+import kcms.ui.cms.WithOrdersRoute
 import kcms.ui.cms.i18n.KcmsInternationalization
+import kcms.ui.cms.orderChangeBlock
 import kiss.gossr.spring.GetRoute
 import kiss.gossr.spring.PostRoute
 
@@ -12,9 +14,9 @@ data class KcmsEnumCategoryRoute(val c: String) : GetRoute
 data class KcmsEnumCategorySaveRoute(
     val categoryId: String,
     val values: MutableMap<Long, String> = HashMap(),
-    val orders: MutableMap<Long, Int> = HashMap(),
+    override val orders: MutableMap<Long, Int> = HashMap(),
     var multiValue: String? = null,
-): PostRoute
+): PostRoute, WithOrdersRoute
 
 class KcmsEnumCategoryPage(
     val category: KcmsEnumCategory,
@@ -25,13 +27,6 @@ class KcmsEnumCategoryPage(
 ) {
 
     override fun pageBody() {
-        STYLE(
-            """
-            tr:first-of-type span.move-value-up { display: none; }          
-            tr:last-of-type span.move-value-down { display: none; }          
-        """
-        )
-
         FORM(KcmsEnumCategorySaveRoute(categoryId = category.id)) { route ->
             HIDDEN(route::categoryId)
             TABLE("table") {
@@ -72,37 +67,7 @@ class KcmsEnumCategoryPage(
                 }
             }
             TD {
-                namePrefix(route::orders) {
-                    INPUT("order") {
-                        name(v.id.toString())
-                        type("hidden")
-                        value(v.order)
-                    }
-                }
-                SPAN("btn btn-link move-value-up") {
-                    style("border: none; padding: 0 0;")
-                    title(i18n.moveToTop)
-                    onClick("moveRowOnTop(this)")
-                    +"⤒"
-                }
-                SPAN("btn btn-link move-value-up") {
-                    style("border: none; padding: 0 0;")
-                    title(i18n.moveUp)
-                    onClick("moveRowUp(this)")
-                    +"↑"
-                }
-                SPAN("btn btn-link move-value-down") {
-                    style("border: none; padding: 0 0;")
-                    title(i18n.moveDown)
-                    onClick("moveRowDown(this)")
-                    +"↓"
-                }
-                SPAN("btn btn-link move-value-down") {
-                    style("border: none; padding: 0 0;")
-                    title(i18n.moveToTheBottom)
-                    onClick("moveRowToBottom(this)")
-                    +"⤓"
-                }
+                orderChangeBlock(route, v.id, v.order, false)
             }
         }
     }

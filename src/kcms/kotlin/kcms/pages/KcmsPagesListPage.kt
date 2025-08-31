@@ -67,10 +67,7 @@ class KcmsPagesListPage(
                             }
                         }
                         TD {
-                            A {
-                                href(KcmsTemplateRoute(p.templateId))
-                                +p.templateId
-                            }
+                            +p.templateId
                         }
                         TD {
                             classes(if(p.published) "text-success" else "text-danger")
@@ -101,7 +98,7 @@ class KcmsPagesListPage(
                     SELECT(route::templateId) {
                         classes("input-group-text")
                         style("background-color: white;")
-                        OPTION("-- ${i18n.anyTemplate} --")
+                        OPTION("", "-- ${i18n.anyTemplate} --")
                         templates.forEach { t ->
                             OPTION(t.templateId)
                         }

@@ -1,5 +1,6 @@
 package kcms.ui.cms.i18n
 
+import kcms.common.nullIfBlank
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import javax.annotation.PostConstruct
@@ -39,7 +40,7 @@ interface KcmsI18n {
     val enums: String
     val backgroundJobs: String
     val files: String
-    val templates: String
+    val settings: String
     val pages: String
     val moveToTheBottom: String
     val moveDown: String
@@ -63,9 +64,11 @@ class KcmsInternationalization(
     @PostConstruct
     fun postConstruct() {
         instance = if(lang.equals("ru", ignoreCase = true)) kcmsI18nRu else kcmsI18nEn
+        language = lang.nullIfBlank()?.lowercase() ?: "en"
     }
 
     companion object {
+        lateinit var language: String
         lateinit var instance: KcmsI18n
     }
 }

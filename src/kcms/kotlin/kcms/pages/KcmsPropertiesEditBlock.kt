@@ -3,6 +3,7 @@ package kcms.pages
 import kcms.common.nullIfEmpty
 import kcms.enums.EnumValueService
 import kcms.ui.KcmsGossRenderer
+import kcms.ui.cms.i18n.KcmsInternationalization
 import kcms.widgets.PagePropertyDescriptor
 import kcms.widgets.Widget
 import kcms.widgets.WidgetComponentService
@@ -12,7 +13,7 @@ import kotlin.math.roundToInt
 
 class KcmsPropertiesEditBlock(
     val route: WidgetPropertiesSaveRoute,
-    val values: Map<String, PageProperty>
+    val values: Map<String, KcmsProperty>
 ) : KcmsGossRenderer() {
 
     fun drawWidgets(widgets: List<Widget>?) {
@@ -45,12 +46,23 @@ class KcmsPropertiesEditBlock(
                         type("text")
                         required(p.required)
                         value(v?.text)
-                    } else TEXTAREA("form-control") {
-                        style("width: 100%")
-                        attr("rows", p.lines)
+                    } else {
+                        val id = UUID.randomUUID().toString().replace("-", "")
+                        TEXTAREA("form-control") {
+                            id(id)
+                            style("width: 100%")
+                            attr("rows", p.lines)
+                            namePrefix(route::properties) { name(p.key) }
+                            required(p.required)
+                            +v?.text
+                        }
+                        if(p.htmlEditor) SCRIPT(code = """$('#$id').trumbowyg({lang:'${KcmsInternationalization.language}'});""")
+                    }
+
+                    is PagePropertyDescriptor.AsBool -> SELECT("form-control") {
                         namePrefix(route::properties) { name(p.key) }
-                        required(p.required)
-                        +v?.text
+                        OPTION("true", p.trueLabel ?: i18n.yes, selected = v?.asBool == true)
+                        OPTION("false", p.trueLabel ?: i18n.no, selected = v?.asBool != true)
                     }
 
                     is PagePropertyDescriptor.AsDate -> INPUT("form-control") {
@@ -129,6 +141,7 @@ class KcmsPropertiesEditBlock(
         val enumValues = EnumValueService.instance.getEnumValues(p.category)
         (0 until p.columns).forEach { c ->
             DIV("col-12 col-md") {
+                HIDDEN(p.key, "")
                 enumValues.forEachIndexed { index, e ->
                     if(index % p.columns == c) DIV {
                         val cbId = "checkbox-${UUID.randomUUID()}"

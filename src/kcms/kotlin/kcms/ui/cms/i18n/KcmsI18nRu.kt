@@ -7,7 +7,7 @@ class KcmsI18nRu : KcmsI18n {
     override val more: String
         get() = "Ещё..."
     override val newValues: String
-        get() = "Новые значения"
+        get() = "Новые значения (по одному на строке)"
     override val enumCategory: String
         get() = "Перечисление"
     override val value: String
@@ -19,13 +19,13 @@ class KcmsI18nRu : KcmsI18n {
     override val moveUp: String
         get() = "Передвинуть повыше"
     override val moveDown: String
-        get() = "Педевинуть пониже"
+        get() = "Перевинуть пониже"
     override val moveToTheBottom: String
         get() = "Передвинуть в самый низ"
     override val pages: String
         get() = "Страницы"
-    override val templates: String
-        get() = "Шаблоны страниц"
+    override val settings: String
+        get() = "Настройки"
     override val files: String
         get() = "Файлы"
     override val backgroundJobs: String

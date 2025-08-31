@@ -71,6 +71,7 @@ class KcmsPagePage(
     }
 
     override fun pageBody() {
+        includeTrumbowyg()
 
         if(p.id >= 0) {
             H3 {

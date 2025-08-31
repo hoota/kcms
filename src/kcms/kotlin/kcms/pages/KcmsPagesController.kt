@@ -6,6 +6,9 @@ import kcms.common.nullIfBlank
 import kcms.common.orNull
 import kcms.files.PageFileRepository
 import kcms.ui.cms.PagedData
+import kcms.ui.cms.WithOrdersRoute
+import kcms.ui.cms.i18n.KcmsInternationalization
+import kcms.widgets.SitePropertiesDescriptor
 import kcms.widgets.WidgetRenderContext
 import kiss.gossr.spring.GetRoute
 import kiss.gossr.spring.PutRoute
@@ -21,38 +24,42 @@ import javax.servlet.http.HttpServletResponse
 class KcmsPagesController(
     val pagesRepository: PagesRepository,
     val pagePropertyRepository: PagePropertyRepository,
+    val sitePropertyRepository: SitePropertyRepository,
     val pageTemplatesService: PageTemplatesService,
     val pageFileRepository: PageFileRepository,
-    val slugGenerators: SlugGenerators
+    val slugGenerators: SlugGenerators,
+    val sitePropertiesDescriptors: List<SitePropertiesDescriptor>,
 ) : CommonService() {
 
-    class KcmsTemplatesListRoute : GetRoute
+    class KcmsSiteSettingsRoute : GetRoute
 
     @RouteHandler
-    fun templatesList(route: KcmsTemplatesListRoute): View {
-        return KcmsTemplatesListPage(pageTemplatesService.templates)
-    }
-
-    @RouteHandler
-    fun template(route: KcmsTemplateRoute): View {
-        return KcmsTemplatePage(
-            pageTemplatesService.getTemplate(route.templateId)!!,
-            properties = pagePropertyRepository.findByIdPageId(0L).associateBy { it.id.propertyId }
+    fun settings(route: KcmsSiteSettingsRoute): View {
+        return KcmsSiteSettingsPage(
+            sitePropertiesDescriptors
         )
     }
 
     @RouteHandler
-    fun templateSave(route: KcmsTemplateSaveRoute): ModelAndView {
+    fun template(route: KcmsSitePropertiesRoute): View {
+        return KcmsSitePropertiesPage(
+            sitePropertiesDescriptors.first { it.javaClass.simpleName == route.bean },
+            properties = sitePropertyRepository.findAll().associateBy { it.key }
+        )
+    }
+
+    @RouteHandler
+    fun templateSave(route: KcmsSitePropertiesSaveRoute): ModelAndView {
         if(route.doSave != null) {
             transaction { em ->
-                getPageProperties(route, 0L).forEach {
+                getPageProperties(route).forEach {
                     em.merge(it)
                 }
             }
             Caches.instance.reset()
         }
 
-        return ModelAndView(redirect(KcmsTemplatesListRoute()))
+        return ModelAndView(redirect(KcmsSiteSettingsRoute()))
     }
 
     data class KcmsPagesListRoute(
@@ -69,7 +76,7 @@ class KcmsPagesController(
     ): View {
         val pages = pageTemplatesService.searchPages(
             query = route.query,
-            templateIds = route.templateId?.let { setOf(it) },
+            templateIds = route.templateId.nullIfBlank()?.let { setOf(it) },
             parentIds = route.parentId?.let { setOf(it) },
             checkProperties = route.searchContent == true
         )
@@ -137,23 +144,17 @@ class KcmsPagesController(
         }
     }
 
-    fun getPageProperties(route: WidgetPropertiesSaveRoute, pageId: Long): List<PageProperty> {
+    fun getPageProperties(route: WidgetPropertiesSaveRoute): List<SiteProperty> {
         return route.properties.map { (propertyId, value) ->
-            PageProperty(
-                id = PagePropertyId(
-                    pageId = pageId,
-                    propertyId = propertyId,
-                ),
+            SiteProperty(
+                key = propertyId,
                 text = value,
                 number = value.toBigDecimalOrNull(),
                 date = try { LocalDate.parse(value) }catch(e: Exception) { null }
             )
         } + route.listProperties.map { (propertyId, values) ->
-            PageProperty(
-                id = PagePropertyId(
-                    pageId = pageId,
-                    propertyId = propertyId,
-                ),
+            SiteProperty(
+                key = propertyId,
             ).also { it.asList = values.mapNotNull { it.nullIfBlank() } }
         } + route.enumMapProperties.map { p ->
             p.key.split("@", limit = 2).let {
@@ -168,11 +169,8 @@ class KcmsPagesController(
                 it.first!! to it.second!!
             }
 
-            PageProperty(
-                id = PagePropertyId(
-                    pageId = pageId,
-                    propertyId = propertyId,
-                ),
+            SiteProperty(
+                key = propertyId,
             ).also { it.asMap = map }
         }
     }
@@ -186,14 +184,14 @@ class KcmsPagesController(
             templateId = ""
         )
 
-        val properties = getPageProperties(route, p.id).associateBy { it.id.propertyId }
+        val properties = getPageProperties(route).associateBy { it.key }
 
         p.title = route.pageTitle
         p.templateId = route.pageTemplate
         p.parentId = route.parentId
         p.published = route.published == true
         p.slug = slugGenerators.generators[p.templateId]?.generateSlug(p, object : WidgetRenderContext {
-            override fun getProperty(propertyKey: String): PageProperty? = properties[propertyKey]
+            override fun getProperty(propertyKey: String): KcmsProperty? = properties[propertyKey]
         }) ?: route.pageSlug
 
         if(route.doRemove != null) {
@@ -206,7 +204,12 @@ class KcmsPagesController(
             transaction { em ->
                 pagesRepository.save(p)
                 properties.values.forEach {
-                    em.merge(it)
+                    em.merge(PageProperty(
+                        id = PagePropertyId(pageId = p.id, propertyId = it.key),
+                        text = it.text,
+                        number = it.number,
+                        date = it.date
+                    ))
                 }
             }
             Caches.instance.reset()
@@ -216,8 +219,8 @@ class KcmsPagesController(
     }
 
     data class KcmsPagesOrderSaveRoute(
-        val orders: MutableMap<Long, Int> = HashMap(),
-    ) : PutRoute
+        override val orders: MutableMap<Long, Int> = HashMap(),
+    ) : PutRoute, WithOrdersRoute
 
     @RouteHandler
     fun orderSave(

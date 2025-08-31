@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component
 class KcmsI18nEn : KcmsI18n {
     override val more: String get() = "More..."
     override val newValues: String
-        get() = "New Values"
+        get() = "New Values (one by line)"
     override val enumCategory: String
         get() = "Enum Category"
     override val value: String
@@ -23,8 +23,8 @@ class KcmsI18nEn : KcmsI18n {
         get() = "Move to the bottom"
     override val pages: String
         get() = "Pages"
-    override val templates: String
-        get() = "Templates"
+    override val settings: String
+        get() = "Settings"
     override val files: String
         get() = "Files"
     override val backgroundJobs: String

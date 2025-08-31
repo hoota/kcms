@@ -13,32 +13,30 @@ import java.time.LocalDate
 import javax.servlet.http.HttpServletRequest
 
 data class PageTemplateRenderContext(
-    val request: HttpServletRequest,
     val page: Page,
-    val rootProperties: Map<String, PageProperty>? = null,
+    val siteProperties: Map<String, SiteProperty>? = null,
     val pageProperties: Map<String, PageProperty>? = null,
     val pageFiles: List<PageFile> = emptyList(),
 ) : WidgetRenderContext {
 
-    override fun getProperty(propertyKey: String): PageProperty? =
-        pageProperties?.get(propertyKey) ?: rootProperties?.get(propertyKey)
+    override fun getProperty(propertyKey: String): KcmsProperty? =
+        pageProperties?.get(propertyKey) ?: siteProperties?.get(propertyKey)
 
-    fun <T> bindParams(params: T): T = try {
-        val binder = ServletRequestDataBinder(params)
-        binder.bind(request)
-        params
-    }catch(e: Exception) {
-        params
-    }
+}
 
+fun <T> HttpServletRequest.bindParams(params: T): T = try {
+    val binder = ServletRequestDataBinder(params)
+    binder.bind(this)
+    params
+}catch(e: Exception) {
+    params
 }
 
 interface PageTemplate {
     val templateId: String
     val widgets: List<Widget>? get() = null
-    val globalWidgets: List<Widget>? get() = null
 
-    fun view(context: PageTemplateRenderContext): View
+    fun view(request: HttpServletRequest, context: PageTemplateRenderContext): View
 }
 
 interface CouldBeParentPageTemplate : PageTemplate
@@ -47,6 +45,8 @@ interface WithPageTemplateRenderContext {
     val pageContext: PageTemplateRenderContext
 
     fun PagePropertyDescriptor.AsText.value(): String? = pageContext.getProperty(this)?.text
+
+    fun PagePropertyDescriptor.AsBool.value(): Boolean = pageContext.getProperty(this)?.text == "true"
 
     fun PagePropertyDescriptor.AsDate.value(): LocalDate? = pageContext.getProperty(this)?.date
 

@@ -1,5 +1,6 @@
 package kcms.config
 
+import kiss.gossr.spring.CssHelper
 import kiss.gossr.spring.RoutesHelper
 import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Bean
@@ -29,6 +30,16 @@ class WebMvcConfig : WebMvcConfigurer {
         applicationContext: ApplicationContext
     ) = RoutesHelper(
         applicationContext, handlerMapping
+    )
+
+    @Bean
+    fun cssHelper(
+        handlerMapping: RequestMappingHandlerMapping,
+        applicationContext: ApplicationContext
+    ) = CssHelper(
+        applicationContext,
+        handlerMapping,
+        devMode = System.getProperty("dev-mode") == "true"
     )
 
     @Bean

@@ -17,34 +17,15 @@ import javax.persistence.Table
 data class PageProperty(
     @EmbeddedId
     val id: PagePropertyId,
-    var text: String? = null,
-    var date: LocalDate? = null,
-    var number: BigDecimal? = null,
-) : Serializable
+    override var text: String? = null,
+    override var date: LocalDate? = null,
+    override var number: BigDecimal? = null,
+) : KcmsProperty {
 
-var PageProperty.asList: List<String>?
-    get() = try {
-        KcmsGossRenderer.objectMapper.readValue(text, PagePropertyStringListValue::class.java)
-    }catch(e: Exception) {
-        null
-    }
-    set(v) {
-        text = KcmsGossRenderer.objectMapper.writeValueAsString(v)
-    }
+    override val key: String
+        get() = id.propertyId
+}
 
-var PageProperty.asMap: Map<Long, String>?
-    get() = try {
-        KcmsGossRenderer.objectMapper.readValue(text, PagePropertyMapValue::class.java)
-    }catch(e: Exception) {
-        null
-    }
-    set(v) {
-        text = KcmsGossRenderer.objectMapper.writeValueAsString(v)
-    }
-
-class PagePropertyStringListValue : ArrayList<String>()
-
-class PagePropertyMapValue : LinkedHashMap<Long, String>()
 
 @Embeddable
 data class PagePropertyId(

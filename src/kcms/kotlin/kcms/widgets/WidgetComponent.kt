@@ -11,6 +11,7 @@ interface WidgetComponent {
 @Service
 class WidgetComponentService(
     private val applicationContext: ApplicationContext,
+    val sitePropertiesDescriptors: List<SitePropertiesDescriptor>,
 ) {
 
     fun getWidgetComponents(clazz: Class<out WidgetComponent>): Map<String, WidgetComponent> {

@@ -1,8 +1,10 @@
 package kcms.widgets
 
+import kcms.common.toBooleanOrNull
 import kcms.enums.EnumValue
 import kcms.enums.EnumValueService
 import kcms.enums.KcmsEnumCategory
+import kcms.pages.KcmsProperty
 import kcms.pages.PageProperty
 import kcms.pages.asList
 import kcms.pages.asMap
@@ -23,6 +25,14 @@ sealed interface PagePropertyDescriptor {
         override val title: String,
         val lines: Int = 1,
         val required: Boolean = false,
+        val htmlEditor: Boolean = false,
+    ) : PagePropertyDescriptor
+
+    data class AsBool(
+        override val key: String,
+        override val title: String,
+        val trueLabel: String? = null,
+        val falseLabel: String? = null,
     ) : PagePropertyDescriptor
 
     data class AsDate(
@@ -93,11 +103,15 @@ sealed interface PagePropertyDescriptor {
 }
 
 interface WidgetRenderContext {
-    fun getProperty(propertyKey: String): PageProperty?
-    fun getProperty(property: PagePropertyDescriptor): PageProperty? = getProperty(property.key)
+    fun getProperty(propertyKey: String): KcmsProperty?
+    fun getProperty(property: PagePropertyDescriptor): KcmsProperty? = getProperty(property.key)
 
     fun valueOf(p: PagePropertyDescriptor.AsText): String? {
         return getProperty(p)?.text
+    }
+
+    fun valueOf(p: PagePropertyDescriptor.AsBool): Boolean {
+        return getProperty(p)?.text?.toBooleanOrNull() == true
     }
 
     fun valueOf(p: PagePropertyDescriptor.AsDate): LocalDate? {
@@ -169,10 +183,12 @@ open class Widget(
 open class HtmlContentWidget(
     widgetId: String,
     title: String,
+    htmlEditor: Boolean = false,
     val property: PagePropertyDescriptor.AsText = PagePropertyDescriptor.AsText(
         key = "$widgetId.content",
         title = "HTML",
-        lines = 10
+        lines = 10,
+        htmlEditor = htmlEditor
     )
 ) : Widget(title, {
     row(property)
