@@ -12,7 +12,7 @@ class Caches(
     private val caches: List<Caching>
 ) {
 
-    fun reset() {
+    fun resetAll() {
         caches.forEach { it.resetCaches() }
     }
 

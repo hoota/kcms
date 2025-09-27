@@ -1,7 +1,6 @@
 package kcms.enums
 
 import kcms.common.Caches
-import kcms.common.Caching
 import kcms.common.CommonService
 import kcms.common.nullIfBlank
 import kiss.gossr.spring.GetRoute
@@ -35,10 +34,10 @@ class KcmsEnumsController(
                 enumCategoryRepository.save(c)
             }
 
-            Caches.instance.reset()
+            Caches.instance.resetAll()
 
             ModelAndView(
-                redirect(KcmsEnumsCategoriesRoute())
+                redirectToReferer(KcmsEnumsCategoriesRoute())
             )
         }catch(e: Exception) {
             ModelAndView(KcmsEnumCategoryEditModal(
@@ -57,12 +56,15 @@ class KcmsEnumsController(
         )
     }
 
-    class EnumCategoryAddRoute : GetRoute
+    data class EnumCategoryAddRoute(
+        val id: String? = null,
+        val title: String? = null,
+    ) : GetRoute
 
     @RouteHandler
     fun enumCategoryAdd(route: EnumCategoryAddRoute): View {
         return KcmsEnumCategoryEditModal(
-            EnumCategory("", "")
+            EnumCategory(route.id ?: "", route.title ?: "")
         )
     }
 

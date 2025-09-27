@@ -72,7 +72,11 @@ class PublicPagesController(
         if(file.exists() && file.isFile) {
             var mimeType = URLConnection.guessContentTypeFromName(path)
             if(mimeType == null) {
-                mimeType = MediaType.APPLICATION_OCTET_STREAM_VALUE
+                if(path.endsWith(".webmanifest")) {
+                    mimeType = "application/manifest+json"
+                } else if(path.endsWith(".ico")) {
+                    mimeType = "image/x-icon"
+                } else mimeType = MediaType.APPLICATION_OCTET_STREAM_VALUE
             }
 
             response.setHeader(HttpHeaders.PRAGMA, "no-cache")

@@ -7,7 +7,6 @@ import kcms.common.orNull
 import kcms.files.PageFileRepository
 import kcms.ui.cms.PagedData
 import kcms.ui.cms.WithOrdersRoute
-import kcms.ui.cms.i18n.KcmsInternationalization
 import kcms.widgets.SitePropertiesDescriptor
 import kcms.widgets.WidgetRenderContext
 import kiss.gossr.spring.GetRoute
@@ -56,7 +55,7 @@ class KcmsPagesController(
                     em.merge(it)
                 }
             }
-            Caches.instance.reset()
+            Caches.instance.resetAll()
         }
 
         return ModelAndView(redirect(KcmsSiteSettingsRoute()))
@@ -198,6 +197,7 @@ class KcmsPagesController(
             transaction {
                 pagesRepository.deleteById(p.id)
             }
+            Caches.instance.resetAll()
         }
 
         if(route.doSave != null || route.doSaveAndContinue != null) {
@@ -212,7 +212,7 @@ class KcmsPagesController(
                     ))
                 }
             }
-            Caches.instance.reset()
+            Caches.instance.resetAll()
         }
 
         return redirect(if(route.doSaveAndContinue != null) KcmsPageRoute(p.id) else KcmsPagesListRoute())
@@ -235,7 +235,7 @@ class KcmsPagesController(
             }
         }
 
-        Caches.instance.reset()
+        Caches.instance.resetAll()
 
         return null
     }

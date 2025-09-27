@@ -61,7 +61,7 @@ class PageFilesService(
 
         pageFileRepository.save(f)
 
-        Caches.instance.reset()
+        Caches.instance.resetAll()
     }
 
     fun removeFile(fileId: Long) {
@@ -76,7 +76,7 @@ class PageFilesService(
             }
         }
 
-        Caches.instance.reset()
+        Caches.instance.resetAll()
     }
 
     fun scale(file: File): Boolean {
@@ -116,20 +116,17 @@ class PageFilesService(
     fun resizeImageByWidth(inputFile: File, outputFile: File, targetWidth: Int, format: String): Boolean = try {
         val originalImage = ImageIO.read(inputFile)
 
-        // Вычисление новой высоты с сохранением пропорций
         val originalWidth = originalImage.width
         val originalHeight = originalImage.height
         val targetHeight = (targetWidth * originalHeight) / originalWidth
 
         if(targetWidth >= originalWidth || targetHeight >= originalHeight) {
-            // create a symlink
+            // create a symlink if requested size > original size
             Files.createSymbolicLink(outputFile.canonicalFile.toPath(), inputFile.canonicalFile.toPath())
         } else {
-            // Создание нового изображения с нужными размерами
             val tmp = originalImage.getScaledInstance(targetWidth, targetHeight, Image.SCALE_SMOOTH)
-            val resizedImage = BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_RGB)
+            val resizedImage = BufferedImage(targetWidth, targetHeight, originalImage.type)
 
-            // Отрисовка изображения
             val g2d = resizedImage.createGraphics()
             g2d.drawImage(tmp, 0, 0, null)
             g2d.dispose()
@@ -145,20 +142,17 @@ class PageFilesService(
     fun resizeImageByHeight(inputFile: File, outputFile: File, targetHeight: Int, format: String): Boolean = try {
         val originalImage = ImageIO.read(inputFile)
 
-        // Вычисление новой высоты с сохранением пропорций
         val originalWidth = originalImage.width
         val originalHeight = originalImage.height
         val targetWidth = (targetHeight * originalWidth) / originalHeight
 
         if(targetWidth >= originalWidth || targetHeight >= originalHeight) {
-            // create a symlink
+            // create a symlink if requested size > original size
             Files.createSymbolicLink(outputFile.canonicalFile.toPath(), inputFile.canonicalFile.toPath())
         } else {
-            // Создание нового изображения с нужными размерами
             val tmp = originalImage.getScaledInstance(targetWidth, targetHeight, Image.SCALE_SMOOTH)
-            val resizedImage = BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_RGB)
+            val resizedImage = BufferedImage(targetWidth, targetHeight, originalImage.type)
 
-            // Отрисовка изображения
             val g2d = resizedImage.createGraphics()
             g2d.drawImage(tmp, 0, 0, null)
             g2d.dispose()
@@ -205,7 +199,7 @@ class PageFilesService(
 
         pageFileRepository.save(f)
 
-        Caches.instance.reset()
+        Caches.instance.resetAll()
 
     }
 

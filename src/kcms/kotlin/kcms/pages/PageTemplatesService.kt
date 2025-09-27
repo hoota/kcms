@@ -96,6 +96,19 @@ class PageTemplatesService(
         pagePropertyRepository.findByIdPageId(pageId).map { it.copy() }.associateBy { it.id.propertyId }
     }
 
+    fun updatePageProperty(pageId: Long, propertyId: String, updater: (PageProperty) -> Unit): PageProperty {
+        val p = PagePropertyId(
+            pageId = pageId, propertyId = propertyId
+        ).let { id ->
+            pagePropertyRepository.findById(id).orNull() ?: PageProperty(id)
+        }
+
+        updater(p)
+
+        return pagePropertyRepository.save(p)
+    }
+
+
     fun getSiteProperties(): Map<String, SiteProperty> = sitePropertiesCache.value ?: emptyMap()
 
     fun getPagesProperties(pageIds: List<Long>): Map<Long, Map<String, PageProperty>> {
