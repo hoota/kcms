@@ -28,6 +28,8 @@ class KcmsI18nRu : KcmsI18n {
         get() = "Передвинуть в самый низ"
     override val pages: String
         get() = "Страницы"
+    override val totalFound: String
+        get() = "найдено"
     override val settings: String
         get() = "Настройки"
     override val files: String

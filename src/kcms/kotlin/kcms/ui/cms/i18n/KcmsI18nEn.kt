@@ -27,6 +27,8 @@ class KcmsI18nEn : KcmsI18n {
         get() = "Move to the bottom"
     override val pages: String
         get() = "Pages"
+    override val totalFound: String
+        get() = "found"
     override val settings: String
         get() = "Settings"
     override val files: String

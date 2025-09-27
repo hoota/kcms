@@ -13,7 +13,7 @@ class KcmsPagesListPage(
     val parents: List<Page>,
     val pages: PagedData<Page>
 ) : CommonKcmsPage(
-    title = KcmsInternationalization.instance.pages,
+    title = "${KcmsInternationalization.instance.pages} (${KcmsInternationalization.instance.totalFound}: ${pages.total})",
     module = MenuModule.PAGES
 ) {
 

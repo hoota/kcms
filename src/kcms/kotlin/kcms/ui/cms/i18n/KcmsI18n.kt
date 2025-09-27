@@ -43,6 +43,7 @@ interface KcmsI18n {
     val files: String
     val settings: String
     val pages: String
+    val totalFound: String
     val moveToTheBottom: String
     val moveDown: String
     val moveUp: String
