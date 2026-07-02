@@ -43,28 +43,28 @@ class PublicPagesController(
     }
 
     private fun checkForFile(response: HttpServletResponse, uri: String): Boolean {
-        if(KcmsGossRenderer.isDevMode && (checkFile(response, "src/kcms/resources/static/$uri") || checkFile(response, "src/project/resources/static/$uri"))) {
+        if(KcmsGossRenderer.isDevMode && checkFile(response, "src/main/resources/static/$uri")) {
             return true
         }
 
         val resource = ClassPathResource("static$uri")
-        if(resource.exists() && resource.file.isFile) {
-            var mimeType = URLConnection.guessContentTypeFromName(uri)
-            if(mimeType == null) {
-                mimeType = MediaType.APPLICATION_OCTET_STREAM_VALUE
-            }
-
-            response.setDateHeader(HttpHeaders.EXPIRES, System.currentTimeMillis() + TimeUnit.DAYS.toMillis(365))
-            response.setHeader(HttpHeaders.CACHE_CONTROL, "public, max-age=" + (365L * 24 * 60 * 60))
-
-            response.contentType = mimeType
-            resource.inputStream.use {
-                StreamUtils.copy(it, response.outputStream.buffered(64000))
-            }
-            return true
+        if(!resource.exists()) {
+            return false
         }
 
-        return false
+        var mimeType = URLConnection.guessContentTypeFromName(uri)
+        if(mimeType == null) {
+            mimeType = MediaType.APPLICATION_OCTET_STREAM_VALUE
+        }
+
+        response.setDateHeader(HttpHeaders.EXPIRES, System.currentTimeMillis() + TimeUnit.DAYS.toMillis(365))
+        response.setHeader(HttpHeaders.CACHE_CONTROL, "public, max-age=" + (365L * 24 * 60 * 60))
+
+        response.contentType = mimeType
+        resource.inputStream.use {
+            StreamUtils.copy(it, response.outputStream.buffered(64000))
+        }
+        return true
     }
 
     private fun checkFile(response: HttpServletResponse, path: String): Boolean {
