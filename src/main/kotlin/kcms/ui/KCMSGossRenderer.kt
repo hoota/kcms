@@ -44,7 +44,7 @@ open class KcmsGossRenderer : GossSpringRenderer() {
 
     fun getResourceUrlWithVersion(path: String): String = resourceVersions.computeIfAbsent(path) {
         val resource = ClassPathResource("static$path")
-        if(!isDevMode && resource.exists()) {
+        if(!isDevMode && resource.exists() && resource.isReadable) {
             val ver = resource.inputStream.use { DigestUtils.md5DigestAsHex(it) }
             "$path?v=$ver"
         } else {

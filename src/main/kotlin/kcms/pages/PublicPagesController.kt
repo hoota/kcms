@@ -48,7 +48,7 @@ class PublicPagesController(
         }
 
         val resource = ClassPathResource("static$uri")
-        if(!resource.exists()) {
+        if(!resource.exists() || !resource.isReadable) {
             return false
         }
 
