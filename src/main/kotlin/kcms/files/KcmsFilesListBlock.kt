@@ -110,7 +110,7 @@ document.addEventListener('paste', async (event) => {
             formData.append('${route::pageId.name}', ${pageId ?: ""});
 
             try {
-              const response = await fetch(${toJson(RoutesHelper.getRouteUrlPath(route))}, {
+              const response = await fetch(${toJson(RoutesHelper.buildRouteUriPath(route))}, {
                 method: 'POST',
                 body: formData
               });

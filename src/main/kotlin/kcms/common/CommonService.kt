@@ -24,11 +24,11 @@ open class CommonService : Loggable {
     }
 
     fun redirect(url: String) = "redirect:$url"
-    fun redirect(route: GetRoute) = redirect(RoutesHelper.getRouteUrl(route))
+    fun redirect(route: GetRoute) = redirect(RoutesHelper.buildRouteUri(route))
 
     fun redirectToReferer(default: String = "/") =
         redirect((GossSpringRenderer.request()?.getHeader("referer") ?: default))
 
     fun redirectToReferer(default: GetRoute) =
-        redirectToReferer(RoutesHelper.getRouteUrl(default))
+        redirectToReferer(RoutesHelper.buildRouteUri(default))
 }

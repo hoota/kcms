@@ -72,7 +72,7 @@ open class KcmsGossRenderer : GossSpringRenderer() {
     inline fun IMG(body: () -> Unit = {}) = EL("IMG", noBody = true, body = body)
 
     fun openModalOnClick(route: GetRoute) {
-        onClick("return openCommonModal(event, ${toJson(RoutesHelper.getRouteUrl(route))})")
+        onClick("return openCommonModal(event, ${toJson(RoutesHelper.buildRouteUri(route))})")
     }
 
     fun showErrorMessage(errorMessage: String?) {
