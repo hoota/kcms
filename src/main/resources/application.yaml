@@ -8,6 +8,8 @@ server:
       max-request-size: 100MB
   compression:
     enabled: false
+  tomcat:
+    use-relative-redirects: true
 
 cms:
   url-base: ${KCMS_URL_BASE:http://localhost:${KCMS_HTTP_PORT:8080}}
